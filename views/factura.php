@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factura #<?= $factura['id'] ?></title>
+    <link rel="icon" href="images/logo.jpeg" type="image/jpeg">
+    <style>
+        @media print {
+            body {
+                width: <?= $config['ancho_papel'] ?>mm;
+                margin: 0;
+                padding: 5px;
+                font-size: <?= ($config['font_size'] == 2 ? '1.2em' : '1em') ?>;
+            }
+            .no-print { display: none; }
+            table { font-size: 0.9em; }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: <?= $config['ancho_papel'] ?>mm;
+            margin: 0 auto;
+            padding: 5px;
+            font-size: <?= ($config['font_size'] == 2 ? '1.2em' : '1em') ?>;
+        }
+
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .mb-3 { margin-bottom: 15px; }
+        .logo { max-width: 100px; margin: 0 auto; display: block; }
+        .divider { border-top: 1px dashed #000; margin: 10px 0; }
+        .small { font-size: 0.8em; }
+
+        .producto-item {
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px dotted #ccc;
+        }
+
+        .producto-nombre {
+            font-size: 0.85em;
+            margin-bottom: 3px;
+            word-break: break-word;
+        }
+
+        .producto-detalles {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            padding-left: 10px;
+        }
+
+        .producto-cantidad { flex: 1; text-align: left; }
+        .producto-precio { flex: 1; text-align: center; }
+        .producto-total { flex: 1; text-align: right; }
+
+        .total-tarjeta {
+            margin-top: 10px;
+            text-align: right;
+            font-size: 0.9em;
+            padding-top: 5px;
+        }
+        .total-final {
+            margin-top: 10px;
+            text-align: right;
+            font-weight: bold;
+            font-size: 0.9em;
+            border-top: 1px dashed #000;
+            padding-top: 5px;
+        }
+
+        .print-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+
+        .print-button:hover {
+            background: #0056b3;
+        }
+
+        @media screen {
+            body { background: #f0f0f0; padding: 20px; }
+            .factura {
+                background: white;
+                padding: 20px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                border-radius: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+        <button onclick="window.print()" class="print-button">Imprimir Factura</button>
+        <button onclick="window.location.href='/'" class="print-button" style="background: #6c757d;">Volver</button>
+    </div>
+
+    <div class="factura">
+
+        <?php if (!empty($config['logo_src'])): ?>
+            <img src="<?= $config['logo_src'] ?>" alt="Logo" class="logo mb-3">
+        <?php endif; ?>
+
+        <div class="text-center mb-3">
+            <h2 style="margin: 0;"><?= $config['nombre_negocio'] ?></h2>
+
+            <?php if (!empty($config['direccion'])): ?>
+                <div class="small"><?= $config['direccion'] ?></div>
+            <?php endif; ?>
+
+            <?php if (!empty($config['telefono'])): ?>
+                <div class="small">Tel: <?= $config['telefono'] ?></div>
+            <?php endif; ?>
+
+            <?php if (!empty($config['nit'])): ?>
+                <div class="small">NIT: <?= $config['nit'] ?></div>
+            <?php endif; ?>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="mb-3">
+            <div>Factura #: <?= $factura['id'] ?></div>
+            <div>Fecha: <?= date("d/m/Y H:i", strtotime($factura['fecha'])) ?></div>
+        </div>
+
+        <div class="mb-3">
+            <div><strong>Cliente:</strong> <?= $factura['cliente_nombre'] ?></div>
+
+            <?php if (!empty($factura['direccion'])): ?>
+                <div><strong>Dirección:</strong> <?= $factura['direccion'] ?></div>
+            <?php endif; ?>
+
+            <?php if (!empty($factura['telefono'])): ?>
+                <div><strong>Teléfono:</strong> <?= $factura['telefono'] ?></div>
+            <?php endif; ?>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="productos-lista">
+
+            <?php foreach ($detalles as $item): ?>
+                <div class="producto-item">
+
+                    <div class="producto-nombre">
+                        <?= $item['producto_nombre'] ?>
+                    </div>
+
+                    <div class="producto-detalles">
+
+                        <div class="producto-cantidad">
+                            <?= number_format($item['cantidad'], 0, ',', '.') . $item['unidad_medida'] ?>
+                        </div>
+
+                        <div class="producto-precio">
+                            $<?= number_format($item['precio_unitario'], 0, ',', '.') ?>
+                        </div>
+
+                        <div class="producto-total">
+                            $<?= number_format($item['subtotal'], 0, ',', '.') ?>
+                        </div>
+
+                    </div>
+                </div>
+            <?php endforeach; ?>
+            
+            
+            <?php if($factura['descuento'] > 0): 
+                $factura['total'] -= $factura['descuento']; 
+            ?>
+            <div class="total-tarjeta">
+                Descuento: $<?= number_format($factura['descuento'], 0, ',', '.') ?>
+            </div>
+            <?php endif; ?>
+
+            <?php if($factura['servicio'] > 0): 
+                $factura['total'] += $factura['servicio']; 
+            ?>
+            <div class="total-tarjeta">
+                Servicio: $<?= number_format($factura['servicio'], 0, ',', '.') ?>
+            </div>
+            <?php endif; ?>
+            
+            <?php if($factura['pago_tarjeta'] > 0): 
+                $factura['total'] += $factura['pago_tarjeta']; 
+            ?>
+            <div class="total-tarjeta">
+                % Pago con Tarjeta: $<?= number_format($factura['pago_tarjeta'], 0, ',', '.') ?>
+            </div>
+            <?php endif; ?>
+            
+            <div class="total-final">
+                Total: $<?= number_format($factura['total'], 0, ',', '.') ?>
+            </div>
+
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="text-center small">
+            <div>
+                <strong>Forma de Pago:</strong>
+                <?= ucfirst($factura['forma_pago']) ?>
+            </div>
+
+            <?php if (!empty($config['qr_src'])): ?>
+                <div class="mt-3 mb-3">
+                    <img src="<?= $config['qr_src'] ?>" alt="QR para transferencia" style="max-width: 150px;">
+                </div>
+            <?php endif; ?>
+
+            <div class="mt-2">
+                <?= $config['pie_pagina'] ?? '¡Gracias por su compra!' ?>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

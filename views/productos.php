@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="icon" href="images/logo.jpeg" type="image/jpeg">
+    <style>
+        body { 
+            background-color: #f8f9fa; 
+        }
+        .navbar { 
+            background-color: #2c3e50; box-shadow: 0 2px 4px rgba(0,0,0,.1); 
+        }
+        .navbar-brand { 
+            color: white !important; font-weight: bold; 
+        }
+        .card { 
+            border: none; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05); margin-bottom: 1.5rem; 
+        }
+        .card-header { 
+            background-color: #fff; border-bottom: 2px solid #f8f9fa; font-weight: 600;
+        }
+        .search-box { 
+            max-width: 300px;
+        }
+        .table th { 
+            border-top: none; 
+        }
+        .action-buttons .btn { 
+            padding: 0.25rem 0.5rem; 
+        }
+        .search-results {
+            position: absolute;
+            width: 100%;
+            top: 100%;
+            left: 0;
+            margin-top: 2px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            background-color: white;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .search-container {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">Sistema de Facturación</a>
+            <div class="d-flex">
+                <a href="/" class="btn btn-outline-light me-2"><i class="bi bi-house-fill"></i></a>
+                <?php if (in_array($rol, [ROLE_ADMIN, ROLE_MESERO, ROLE_COCINA])): ?>
+                <a href="/inventario" class="btn btn-outline-light me-2" data-bs-toggle="tooltip" title="Gestionar Insumos">
+                    <i class="bi bi-card-checklist"></i>
+                </a>
+                <?php endif; ?>
+                <?php if (in_array($rol, [ROLE_ADMIN])): ?>
+                <a href="/configuracion" class="btn btn-outline-light me-2"><i class="bi bi-gear"></i></a>
+                <?php endif; ?>
+                <a href="/logout" class="btn btn-outline-danger">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div><i class="bi bi-box-fill me-2"></i>Gestión de Productos</div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoProductoModal">
+                        <i class="bi bi-plus-lg me-1"></i>Nuevo Producto
+                    </button>
+                    <button id="btnDescargarPlantilla" class="btn btn-outline-success">
+                        <i class="bi bi-file-earmark-excel"></i> Plantilla Excel
+                    </button>
+                    <button id="btnImportarProductos" class="btn btn-outline-primary">
+                        <i class="bi bi-upload"></i> Importar Excel
+                    </button>
+                    <input type="file" id="archivoImport" accept=".xlsx" class="d-none">
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col">
+                        <div class="input-group search-box ms-auto">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" id="buscarProducto" placeholder="Buscar producto...">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Código</th>
+                                <th>Nombre</th>
+                                <th>Cocina</th>
+                                <th class="text-end">Precio UND</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="productosTabla">
+                            <?php foreach ($productos as $producto): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($producto['codigo']) ?></td>
+                                    <td><?= htmlspecialchars($producto['nombre']) ?></td>
+                                    <td><?= (($producto['cocina'] ?? 0) == 1) ? '🍗' : '🍾' ?></td>
+                                    <td class="text-end">$<?= number_format(floatval($producto['precio_unidad'] ?? 0), 2) ?></td>
+                                    <td class="text-center">
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-outline-success me-1"
+                                                    data-id="<?= $producto['id'] ?>"
+                                                    data-name="<?= $producto['nombre'] ?>"
+                                                    data-action="insumos">
+                                                <i class="bi bi-egg-fried"></i>
+                                            </button>
+
+                                            <button class="btn btn-sm btn-outline-primary me-1"
+                                                    data-id="<?= $producto['id'] ?>"
+                                                    data-action="editar">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                    data-id="<?= $producto['id'] ?>"
+                                                    data-action="eliminar">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nuevo/Editar Producto -->
+    <div class="modal fade" id="nuevoProductoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-box-fill me-2"></i>
+                        <span id="modalTitle">Nuevo Producto</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="formProducto">
+                        <input type="hidden" id="productoId">
+
+                        <div class="mb-3">
+                            <label class="form-label" for="codigo">Código</label>
+                            <input type="text" class="form-control" id="codigo" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="nombre">Nombre</label>
+                            <input type="text" class="form-control" id="nombre" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="precioUnidad">Precio UND</label>
+                            <input type="number" class="form-control" id="precioUnidad" min="0">
+                        </div>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="chkServicio" checked="">
+                            <label class="form-check-label" for="chkServicio">
+                                Enviar a Cocina
+                            </label>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" id="guardarProducto"><i class="bi bi-save me-1"></i>Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nuevo/Editar Insumos -->
+    <div class="modal fade" id="nuevoInsumoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-box-fill me-2"></i>
+                        <span>Insumos - <span id="modalTitleInsumo"></span></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="search-container mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" id="insumo" class="form-control" placeholder="Buscar insumo">
+                        </div>
+                    </div>
+
+                    <div id="tbl-insumos"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/productos.js"></script>
+
+</body>
+</html>
