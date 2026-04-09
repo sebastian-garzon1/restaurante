@@ -6,7 +6,6 @@ $router->post('/api/facturas', function() use($pdo) {
 
     $data = json_decode(file_get_contents("php://input"), true);
 
-    $cliente_id = $data['cliente_id'] ?? null;
     $pago_tarjeta = 0;
     $pago_servicio = 0;
     $total = $data['total'] ?? 0;
@@ -30,7 +29,7 @@ $router->post('/api/facturas', function() use($pdo) {
         }
     }
 
-    if (!$cliente_id || count($productos) === 0) {
+    if ( count($productos) === 0) {
         http_response_code(400);
         echo json_encode(['error' => 'Datos incompletos']);
         return;
@@ -44,12 +43,11 @@ $router->post('/api/facturas', function() use($pdo) {
 
         // Insertar factura
         $stmt = $pdo->prepare("
-            INSERT INTO facturas (cliente_id, user_id, total, forma_pago, pago_tarjeta, servicio, descuento, fecha)
-            VALUES (:cliente_id, :user_id, :total, :forma_pago, :pago_tarjeta, :servicio, :descuento, :fecha)
+            INSERT INTO facturas (user_id, total, forma_pago, pago_tarjeta, servicio, descuento, fecha)
+            VALUES (:user_id, :total, :forma_pago, :pago_tarjeta, :servicio, :descuento, :fecha)
         ");
 
         $stmt->execute([
-            ':cliente_id' => $cliente_id,
             ':user_id' => $_SESSION['user']['id'],
             ':total' => $total,
             ':forma_pago' => $forma_pago,
@@ -78,41 +76,6 @@ $router->post('/api/facturas', function() use($pdo) {
                 ':subtotal' => $p['subtotal']
             ]);
         }
-
-        // Preparar consulta para obtener insumos por producto
-        $stmtInsumos = $pdo->prepare("
-            SELECT insumo_id, cantidad
-            FROM producto_insumo
-            WHERE producto_id = :producto_id
-        ");
-
-        // Preparar update de stock
-        $stmtDescontar = $pdo->prepare("
-            UPDATE insumos
-            SET stock = stock - :cantidad
-            WHERE id = :insumo_id
-        ");
-
-        foreach ($productos as $p) {
-            // Obtener insumos del producto
-            $stmtInsumos->execute([
-                ':producto_id' => $p['producto_id']
-            ]);
-
-            $insumos = $stmtInsumos->fetchAll(PDO::FETCH_ASSOC);
-
-            foreach ($insumos as $i) {
-                // Calcular consumo real
-                $cantidad_a_descontar = $i['cantidad'] * $p['cantidad'];
-
-                // Descontar stock
-                $stmtDescontar->execute([
-                    ':cantidad' => $cantidad_a_descontar,
-                    ':insumo_id' => $i['insumo_id']
-                ]);
-            }
-        }
-
         // Confirmar operación
         $pdo->commit();
 
@@ -131,9 +94,8 @@ $router->get('/api/facturas/{id}/detalles', function($id) use($pdo) {
     try {
         // Factura
         $stmt = $pdo->prepare("
-            SELECT f.*, c.nombre AS cliente_nombre, c.direccion, c.telefono
+            SELECT f.*, 'Cliente' AS cliente_nombre, c.direccion, c.telefono
             FROM facturas f
-            JOIN clientes c ON f.cliente_id = c.id
             WHERE f.id = ?
         ");
 
@@ -168,9 +130,9 @@ $router->get('/api/facturas/{id}/detalles', function($id) use($pdo) {
                 'forma_pago' => $factura['forma_pago'],
             ],
             'cliente' => [
-                'nombre' => $factura['cliente_nombre'],
-                'direccion' => $factura['direccion'],
-                'telefono' => $factura['telefono']
+                'nombre' => "Cliente",
+                'direccion' => "Lugar",
+                'telefono' => "No registra"
             ],
             'productos' => array_map(function($p) {
                 return [
@@ -212,36 +174,6 @@ $router->delete('/api/facturas/{id:\d+}', function($id) use ($pdo) {
 
         if (empty($detalles)) {
             throw new Exception('No se encontraron detalles para la factura');
-        }
-
-        // Preparar consultas
-        $stmtInsumos = $pdo->prepare("
-            SELECT insumo_id, cantidad
-            FROM producto_insumo
-            WHERE producto_id = ?
-        ");
-
-        $stmtSumarStock = $pdo->prepare("
-            UPDATE insumos
-            SET stock = stock + ?
-            WHERE id = ?
-        ");
-
-        // Revertir stock
-        foreach ($detalles as $d) {
-
-            $stmtInsumos->execute([$d['producto_id']]);
-            $insumos = $stmtInsumos->fetchAll(PDO::FETCH_ASSOC);
-
-            foreach ($insumos as $i) {
-                $cantidad_devolver = $i['cantidad'] * $d['cantidad'];
-
-                // devolver stock
-                $stmtSumarStock->execute([
-                    $cantidad_devolver,
-                    $i['insumo_id']
-                ]);
-            }
         }
 
         // Eliminar detalles

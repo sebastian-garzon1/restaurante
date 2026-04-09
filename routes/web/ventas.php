@@ -9,9 +9,8 @@ $router->get('/ventas', function() use($pdo) {
     requireRole([ROLE_ADMIN, ROLE_CAJERO]);
     $rol = currentRole();
     $query = "
-        SELECT f.*, (COALESCE(total-descuento, 0)) AS total_final, c.nombre as cliente_nombre, u.nombre as vendedor_nombre
+        SELECT f.*, (COALESCE(total-descuento, 0)) AS total_final, 'cliente' as cliente_nombre, u.nombre as vendedor_nombre
         FROM facturas f
-        JOIN clientes c ON f.cliente_id = c.id
         JOIN usuarios u ON f.user_id = u.id
         WHERE 1=1
     ";

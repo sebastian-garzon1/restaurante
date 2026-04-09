@@ -1,5 +1,4 @@
 $(document).ready(function() {
-    let timeoutCliente;
     let timeoutProducto;
     let productoSeleccionado = null;
     let pedidosGuardados = JSON.parse(localStorage.getItem('pedidos') || '[]');
@@ -9,35 +8,6 @@ $(document).ready(function() {
     function actualizarLocalStorage() {
         localStorage.setItem('pedidos', JSON.stringify(pedidosGuardados));
     }
-
-    // Búsqueda de clientes
-    $('#cliente').on('keyup', function() {
-        clearTimeout(timeoutCliente);
-        const valor = $(this).val();
-        
-        if (valor.length < 2) return;
-
-        timeoutCliente = setTimeout(() => {
-            $.ajax({
-                url: '/api/clientes/buscar',
-                data: { q: valor },
-                success: function(clientes) {
-                    if (clientes.length === 0) {
-                        $('#infoCliente').hide();
-                        return;
-                    }
-                    
-                    // Si solo hay un cliente, seleccionarlo automáticamente
-                    if (clientes.length === 1) {
-                        seleccionarCliente(clientes[0]);
-                    } else {
-                        // Aquí podrías mostrar una lista de clientes para seleccionar
-                        mostrarListaClientes(clientes);
-                    }
-                }
-            });
-        }, 300);
-    });
 
     // Búsqueda de productos
     $('#producto').on('keyup', function() {
@@ -61,25 +31,6 @@ $(document).ready(function() {
         }, 300);
     });
 
-    // Función para seleccionar cliente
-    function seleccionarCliente(cliente) {
-        if (!cliente || !cliente.id) {
-            console.error('Cliente inválido:', cliente);
-            return;
-        }
-
-        // Actualizar campos visibles
-        $('#cliente').val(cliente.nombre);
-        $('#cliente_id').val(cliente.id);
-        
-        // Actualizar información del cliente
-        $('#direccionCliente').text(cliente.direccion || 'No especificada');
-        $('#telefonoCliente').text(cliente.telefono || 'No especificado');
-        
-        // Mostrar el panel de información
-        $('#infoCliente').show();
-    }
-
     // Función para seleccionar producto
     function seleccionarProducto(producto) {
         productoSeleccionado = producto;
@@ -87,23 +38,6 @@ $(document).ready(function() {
         $('#producto_id').val(producto.id);
         actualizarPrecioSegunUnidad(producto, $('#unidadMedida').val());
         $('#cantidad').focus();
-    }
-
-    // Función para mostrar lista de clientes
-    function mostrarListaClientes(clientes) {
-        const lista = $('<div class="list-group search-results">');
-        clientes.forEach(cliente => {
-            lista.append(
-                $('<a href="#" class="list-group-item list-group-item-action">')
-                    .text(`${cliente.nombre} ${cliente.telefono ? '- ' + cliente.telefono : ''}`)
-                    .click(function(e) {
-                        e.preventDefault();
-                        seleccionarCliente(cliente);
-                        lista.remove();
-                    })
-            );
-        });
-        $('#cliente').closest('.search-container').append(lista);
     }
 
     // Función para mostrar lista de productos
@@ -188,22 +122,6 @@ $(document).ready(function() {
             precio,
             subtotal
         };
-
-        const resp = await fetch(`/api/inventario/disponibilidad`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-                    producto_id: productoSeleccionado.id,
-                    cantidad: cantidad
-                })
-			});
-            
-        const data = await resp.json();
-        if (!resp.ok)
-            return Swal.fire({
-                icon: "error",
-                title: data.error || "Error al agregar",
-            });
 
         productosFactura.push(item);
         actualizarTablaProductos();
@@ -310,9 +228,6 @@ $(document).ready(function() {
         productosFactura = [];
         totalFactura = 0;
         actualizarTablaProductos();
-        $('#cliente').val('');
-        $('#cliente_id').val('');
-        $('#infoCliente').hide();
         $('#formaPago').val('efectivo');
         $('#chkServicio').prop('checked', true);
         $('#servicio').val('0');
@@ -327,27 +242,9 @@ $(document).ready(function() {
     // Guardar pedido
     $('#guardarPedido').click(function() {
         console.log('=== INICIO GUARDADO DE PEDIDO ===');
-        const cliente_id = $('#cliente_id').val();
-        const cliente_nombre = $('#cliente').val();
-        
-        if (!cliente_id) {
-            console.log('Error: No hay cliente seleccionado');
-            mostrarAlerta('warning', 'Por favor seleccione un cliente');
-            return;
-        }
-
-        if (productosFactura.length === 0) {
-            console.log('Error: No hay productos en el pedido');
-            mostrarAlerta('warning', 'Agregue al menos un producto al pedido');
-            return;
-        }
 
         const pedido = {
             id: Date.now(),
-            cliente_id: cliente_id,
-            cliente_nombre: cliente_nombre,
-            direccion: $('#direccionCliente').text(),
-            telefono: $('#telefonoCliente').text(),
             total: totalFactura,
             forma_pago: $('#formaPago').val(),
             incluir_servicio: $('#chkServicio').is(':checked'),
@@ -389,9 +286,6 @@ $(document).ready(function() {
         productosFactura = [];
         totalFactura = 0;
         actualizarTablaProductos();
-        $('#cliente').val('');
-        $('#cliente_id').val('');
-        $('#infoCliente').hide();
         $('#formaPago').val('efectivo');
         $('#chkServicio').prop('checked', pedido.incluir_servicio || false);
         $('#servicio').val(pedido.servicio || '0');
@@ -403,13 +297,6 @@ $(document).ready(function() {
         localStorage.setItem('pedidoActualId', pedido.id);
         console.log('ID del pedido guardado en localStorage:', pedido.id);
         console.log('Verificación del ID guardado:', localStorage.getItem('pedidoActualId'));
-        
-        // Cargar información del cliente
-        $('#cliente').val(pedido.cliente_nombre);
-        $('#cliente_id').val(pedido.cliente_id);
-        $('#direccionCliente').text(pedido.direccion || 'No especificada');
-        $('#telefonoCliente').text(pedido.telefono || 'No especificado');
-        $('#infoCliente').show();
         
         // Cargar productos
         productosFactura = pedido.productos;
@@ -427,7 +314,6 @@ $(document).ready(function() {
         console.log('=== FIN CARGA DE PEDIDO ===');
         console.log('Estado final:', {
             pedidoId: pedido.id,
-            cliente: pedido.cliente_nombre,
             productos: productosFactura,
             total: totalFactura
         });
@@ -436,16 +322,10 @@ $(document).ready(function() {
     // Generar factura
     $('#generarFactura').click(function() {
         console.log('=== INICIO GENERACIÓN DE FACTURA ===');
-        const cliente_id = $('#cliente_id').val();
         const forma_pago = $('#formaPago').val();
         const incluir_servicio = $('#chkServicio').is(':checked');
         const servicio = $('#servicio').val();
         const descuento = $('#descuento').val();
-        
-        if (!cliente_id) {
-            mostrarAlerta('warning', 'Por favor seleccione un cliente');
-            return;
-        }
 
         if (productosFactura.length === 0) {
             mostrarAlerta('warning', 'Agregue al menos un producto a la factura');
@@ -453,7 +333,6 @@ $(document).ready(function() {
         }
 
         const factura = {
-            cliente_id: cliente_id,
             total: totalFactura,
             forma_pago: forma_pago,
             incluir_servicio: incluir_servicio,
@@ -566,10 +445,10 @@ $(document).ready(function() {
             tbody.append(`
                 <tr>
                     <td>
-                        <strong>${pedido.cliente_nombre}</strong><br>
+                        <strong>cliente</strong><br>
                         <small class="text-muted">
-                            ${pedido.telefono}<br>
-                                ${pedido.direccion}
+                            local<br>
+                                No registra
                         </small>
                     </td>
                     <td><small>${productosResumen}</small></td>

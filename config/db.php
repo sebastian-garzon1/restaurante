@@ -2,8 +2,8 @@
 
 $DB_HOST = "localhost";
 $DB_USER = "root";
-$DB_PASS = "123456";
-$DB_NAME = "restaurante_palermoche";
+$DB_PASS = "";
+$DB_NAME = "restaurante";
 
 try {
     $pdo = new PDO("mysql:host=$DB_HOST;dbname=$DB_NAME;charset=utf8", $DB_USER, $DB_PASS);

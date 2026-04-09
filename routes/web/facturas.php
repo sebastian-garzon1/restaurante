@@ -34,9 +34,8 @@ $router->get('/facturas/{id}/imprimir', function($id) use($pdo) {
 
         // Obtener factura
         $stmt = $pdo->prepare("
-            SELECT f.*, c.nombre AS cliente_nombre, c.direccion, c.telefono
+            SELECT f.*, 'Cliente' AS cliente_nombre, 'Local', 'Sin registrar'
             FROM facturas f
-            JOIN clientes c ON f.cliente_id = c.id
             WHERE f.id = ?
         ");
         $stmt->execute([$factura_id]);

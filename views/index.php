@@ -149,16 +149,6 @@
         <div class="container">
             <a class="navbar-brand" href="/">Palermo Che</a>
             <div class="d-flex">
-                <?php if (in_array($rol, [ROLE_ADMIN, ROLE_CAJERO, ROLE_MESERO])): ?>
-                <a href="/mesas" class="btn btn-outline-light me-2" data-bs-toggle="tooltip" title="Mesas">
-                    <i class="bi bi-grid"></i>
-                </a>
-                <?php endif; ?>
-                <?php if (in_array($rol, [ROLE_ADMIN, ROLE_CAJERO, ROLE_COCINA])): ?>
-                <a href="/cocina" class="btn btn-outline-light me-2" data-bs-toggle="tooltip" title="Cocina">
-                    <i class="bi bi-egg-fried"></i>
-                </a>
-                <?php endif; ?>
                 <?php if (in_array($rol, [ROLE_ADMIN])): ?>
                 <a href="/ventas" class="btn btn-outline-light me-2" data-bs-toggle="tooltip" title="Historial de Ventas">
                     <i class="bi bi-receipt"></i>
@@ -172,11 +162,6 @@
                 <?php if (in_array($rol, [ROLE_ADMIN])): ?>
                 <a href="/usuarios" class="btn btn-outline-light me-2" data-bs-toggle="tooltip" title="Gestionar Usuarios">
                     <i class="bi bi-person-fill-gear"></i>
-                </a>
-                <?php endif; ?>
-                <?php if (in_array($rol, [ROLE_ADMIN, ROLE_CAJERO, ROLE_MESERO])): ?>
-                <a href="/clientes" class="btn btn-outline-light me-2" data-bs-toggle="tooltip" title="Gestionar Clientes">
-                    <i class="bi bi-people"></i>
                 </a>
                 <?php endif; ?>
                 <?php if (in_array($rol, [ROLE_ADMIN])): ?>
@@ -193,48 +178,6 @@
 
     <div class="container">
         <div class="row">
-            <div class="col-md-4">
-                <!-- Información del Cliente -->
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="bi bi-person-fill me-2"></i>
-                            Información del Cliente
-                            <span class="shortcut-hint">(Ctrl+F para buscar)</span>
-                        </div>
-                        
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="search-container">
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="bi bi-search"></i>
-                                        </span>
-                                        <input type="text" id="cliente" class="form-control" placeholder="Buscar cliente por nombre o teléfono...">
-                                        <input type="hidden" id="cliente_id">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="infoCliente" class="mt-3 alert alert-info" style="display: none;">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <i class="bi bi-geo-alt-fill"></i>
-                                    <strong>Dirección:</strong>
-                                    <span id="direccionCliente"></span>
-                                </div>
-                                <div class="col-md-6">
-                                    <i class="bi bi-telephone-fill"></i>
-                                    <strong>Teléfono:</strong>
-                                    <span id="telefonoCliente"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="col-md-3">
                 <!-- Forma de Pago -->
                 <div class="card">

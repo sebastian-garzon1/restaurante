@@ -42,11 +42,9 @@ function mostrarDetalles(id) {
         success: function (data) {
             // Información del cliente
             $("#detallesCliente").html(`
-                        <p><strong>Nombre:</strong> ${data.cliente.nombre}</p>
-                        <p><strong>Dirección:</strong> ${data.cliente.direccion || "No especificada"
-                }</p>
-                        <p><strong>Teléfono:</strong> ${data.cliente.telefono || "No especificado"
-                }</p>
+                        <p><strong>Nombre:</strong> Cliente</p>
+                        <p><strong>Dirección:</strong> casa</p>
+                        <p><strong>Teléfono:</strong> No registra</p>
                     `);
 
             // Información de la factura
@@ -99,33 +97,9 @@ function editarFactura(id) {
         $('#pago').val(venta.forma_pago);
 
         cargarUsuarios(venta.usuario_id);
-        cargarClientes(venta.cliente_id);
 
         $('#modalTitle').text('Editar Venta');
         ventaModal.show();
-    });
-}
-
-function cargarClientes(seleccionado = null) {
-    $.ajax({
-        url: '/api/clientes',
-        method: 'GET',
-        success: function(clientes) {
-            $('#cliente').empty();
-
-            clientes.forEach(c => {
-                const option = $('<option>', {
-                    value: c.id,
-                    text: c.nombre
-                });
-
-                if (seleccionado && seleccionado == c.id) {
-                    option.prop('selected', true);
-                }
-
-                $('#cliente').append(option);
-            });
-        }
     });
 }
 
@@ -155,18 +129,12 @@ function cargarUsuarios(seleccionado = null) {
 $('#guardarVenta').click(async function() {
     const venta = {
         fecha: $('#fechaVenta').val(),
-        cliente_id: $('#cliente').val(),
         usuario_id: $('#usuario').val(),
         forma_pago: $('#pago').val()
     };
 
     if (!venta.fecha) {
         alert('La fecha es requerida');
-        return;
-    }
-
-    if (!venta.cliente_id) {
-        alert('El cliente es requerido');
         return;
     }
 

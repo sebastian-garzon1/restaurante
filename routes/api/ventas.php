@@ -5,10 +5,9 @@ $router->get('/api/ventas/{id:\d+}', function($id) use ($pdo) {
 
     try {
         $stmt = $pdo->prepare("
-            SELECT f.*, c.nombre AS cliente_nombre, u.nombre AS vendedor_nombre
+            SELECT f.*, 'cliente' AS cliente_nombre, u.nombre AS vendedor_nombre
             FROM facturas f
-            LEFT JOIN clientes c ON f.cliente_id = c.id
-            LEFT JOIN usuarios u ON f.cliente_id = u.id
+            LEFT JOIN usuarios u ON f.user_id = u.id
             WHERE f.id = ?
         ");
         $stmt->execute([$id]);
@@ -38,7 +37,6 @@ $router->put('/api/ventas/{id:\d+}', function($id) use ($pdo) {
     try {
         $input = json_decode(file_get_contents("php://input"), true);
         $fecha = $input['fecha'] ?? null;
-        $cliente_id = $input['cliente_id'] ?? null;
         $usuario_id = $input['usuario_id'] ?? null;
         $forma_pago = $input['forma_pago'] ?? null;
 
@@ -70,7 +68,7 @@ $router->put('/api/ventas/{id:\d+}', function($id) use ($pdo) {
             $total_tarjeta = 0;
         }
 
-        if (!$id || !$fecha || !$cliente_id || !$usuario_id || !$forma_pago || !$descuento) {
+        if (!$id || !$fecha || !$usuario_id || !$forma_pago || !$descuento) {
             http_response_code(400);
             echo json_encode([
                 "error" => "ID de venta, fecha, cliente, usuario, descuento y forma de pago son requeridos"
@@ -89,11 +87,11 @@ $router->put('/api/ventas/{id:\d+}', function($id) use ($pdo) {
 
         $stmt = $pdo->prepare("
             UPDATE facturas
-            SET fecha = ?, cliente_id = ?, user_id = ?, forma_pago = ?, pago_tarjeta = ?, descuento = ?
+            SET fecha = ?, user_id = ?, forma_pago = ?, pago_tarjeta = ?, descuento = ?
             WHERE id = ?
         ");
 
-        $stmt->execute([$fecha, $cliente_id, $usuario_id, $forma_pago, $total_tarjeta, $descuento, $id]);
+        $stmt->execute([$fecha, $usuario_id, $forma_pago, $total_tarjeta, $descuento, $id]);
         if ($stmt->rowCount() === 0) {
             http_response_code(404);
             echo json_encode([
@@ -106,7 +104,6 @@ $router->put('/api/ventas/{id:\d+}', function($id) use ($pdo) {
             "success" => true,
             "id" => $id,
             "fecha" => $fecha,
-            "cliente_id" => $cliente_id,
             "usuario_id" => $usuario_id,
             "forma_pago" => $forma_pago,
             "descuento" => $descuento
