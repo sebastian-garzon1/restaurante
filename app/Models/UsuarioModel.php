@@ -142,4 +142,31 @@ class UsuarioModel
         $stmt->execute([$id]);
         return $stmt->rowCount() > 0;
     }
+
+    // Verificar usuario + correo
+    public function findByUserAndEmail(string $usuario, string $correo): array|false
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT * FROM usuarios
+            WHERE usuario = ? AND correo = ?
+            LIMIT 1
+        ");
+        $stmt->execute([$usuario, $correo]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    // Actualizar contraseña
+    public function updatePassword(int $id, string $password): bool
+    {
+        $stmt = $this->pdo->prepare("
+            UPDATE usuarios 
+            SET password = ? 
+            WHERE id = ?
+        ");
+
+        return $stmt->execute([
+            password_hash($password, PASSWORD_BCRYPT),
+            $id
+        ]);
+    }
 }

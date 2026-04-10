@@ -77,6 +77,8 @@ $router->get('/', function() use ($auth) {
 $router->get('/login',  fn() => $authCtrl->showLogin());
 $router->post('/auth',  fn() => $authCtrl->login());
 $router->get('/logout', fn() => $authCtrl->logout());
+$router->get('/restore_password', fn() => $authCtrl->restorePass());
+$router->post('/restore_password', fn() => $authCtrl->restorePassConfirm());
 
 // ── Usuarios ────────────────────────────────────────────────
 $router->get('/usuarios',               fn() => $usuarioCtrl->index());

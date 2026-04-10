@@ -1,6 +1,8 @@
 <?php
 $error = isset($_SESSION['login_error']) ? $_SESSION['login_error'] : null;
 unset($_SESSION['login_error']); // borrar después de mostrarlo
+
+$step = $_GET['step'] ?? 1;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -65,7 +67,7 @@ unset($_SESSION['login_error']); // borrar después de mostrarlo
     <div class="login-card">
         <div class="text-center mb-4">
             <img src="/images/logo.jpeg" alt="Logo Palermo Che" width="80px" srcset="">
-            <div class="login-logo">Palermo Che</div>
+            <div class="login-logo">Cambio de Contraseña</div>
         </div>
 
         <?php if ($error): ?>
@@ -74,14 +76,26 @@ unset($_SESSION['login_error']); // borrar después de mostrarlo
             </div>
         <?php endif; ?>
 
-        <form action="/auth" method="POST">
+        <form action="/restore_password" method="POST">
             <div class="mb-3">
                 <label class="form-label">Usuario</label>
-                <input type="text" name="usuario" class="form-control" required autofocus>
+                <input type="text" name="usuario" class="form-control" required>
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Contraseña</label>
+                <label class="form-label">Correo</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
+
+            <button class="btn btn-primary w-100 mt-3">
+                Verificar
+            </button>
+        </form>
+
+        <?php if ($step == 2): ?>
+        <form action="/restore_password" method="POST" class="mt-3">
+            <div class="mb-3">
+                <label class="form-label">Nueva contraseña</label>
                 <div class="input-group">
                     <input type="password" name="password" class="form-control" id="password" required>
                     <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
@@ -90,18 +104,11 @@ unset($_SESSION['login_error']); // borrar después de mostrarlo
                 </div>
             </div>
 
-            <button class="btn btn-primary w-100 mt-3" type="submit">
-                <i class="bi bi-box-arrow-in-right"></i> Ingresar
+            <button class="btn btn-success w-100 mt-3">
+                Cambiar contraseña
             </button>
-
-            <div class="text-center mt-3">
-                <a href="/restore_password">¿Olvidaste la contraseña?</a>
-            </div>
         </form>
-
-        <div class="footer-text">
-            &copy; <?= date('Y') ?> SebCode · Todos los derechos reservados
-        </div>
+        <?php endif; ?>
     </div>
 
     <script>

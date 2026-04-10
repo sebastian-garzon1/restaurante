@@ -16,13 +16,63 @@ class AuthController
         require __DIR__ . '/../../views/login.php';
     }
 
+    // Vista de restaurar contraseña
+    public function restorePass(): void
+    {
+        require __DIR__ . '/../../views/restaurar_pass.php';
+    }
+
+    // Confirmar restablecer contraseña
+    public function restorePassConfirm(): void
+    {
+        $usuario = trim($_POST['usuario'] ?? '');
+        $correo  = trim($_POST['email'] ?? '');
+        $password = trim($_POST['password'] ?? '');
+
+        // PASO 1: validar usuario + correo
+        if ($usuario && $correo && !$password) {
+
+            $user = $this->usuarioModel->findByUserAndEmail($usuario, $correo);
+
+            if (!$user) {
+                $_SESSION['login_error'] = 'Usuario y correo no coinciden';
+                header('Location: /restore_password');
+                exit;
+            }
+
+            // Guardamos usuario validado en sesión
+            $_SESSION['reset_user'] = $user['id'];
+
+            header('Location: /restore_password?step=2');
+            exit;
+        }
+
+        // PASO 2: cambiar contraseña
+        if ($password && isset($_SESSION['reset_user'])) {
+
+            $this->usuarioModel->updatePassword(
+                $_SESSION['reset_user'],
+                $password
+            );
+
+            unset($_SESSION['reset_user']);
+
+            $_SESSION['login_error'] = 'Contraseña actualizada correctamente';
+            header('Location: /login');
+            exit;
+        }
+
+        $_SESSION['login_error'] = 'Datos incompletos';
+        header('Location: /restore_password');
+    }
+
     public function login(): void
     {
         $usuario  = trim($_POST['usuario']  ?? '');
         $password = trim($_POST['password'] ?? '');
 
         if (!$usuario || !$password) {
-            $error = 'Usuario y contraseña son requeridos';
+            $_SESSION['login_error'] = 'Usuario y contraseña son requeridos';
             require __DIR__ . '/../../views/login.php';
             return;
         }
