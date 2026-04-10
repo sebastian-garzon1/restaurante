@@ -128,7 +128,6 @@
                 </div>
                 <div class="col-md-3 d-flex justify-content-end gap-2">
                     <button class="btn btn-primary" id="filtrarVentas"><i class="bi bi-funnel"></i> Filtrar</button>
-                    <button class="btn btn-success" id="exportarVentas"><i class="bi bi-file-earmark-excel"></i> Exportar</button>
                 </div>
             </div>
         </div>

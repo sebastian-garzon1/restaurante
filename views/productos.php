@@ -117,13 +117,6 @@
                                     <td class="text-end">$<?= number_format(floatval($producto['precio_unidad'] ?? 0), 2) ?></td>
                                     <td class="text-center">
                                         <div class="action-buttons">
-                                            <button class="btn btn-sm btn-outline-success me-1"
-                                                    data-id="<?= $producto['id'] ?>"
-                                                    data-name="<?= $producto['nombre'] ?>"
-                                                    data-action="insumos">
-                                                <i class="bi bi-egg-fried"></i>
-                                            </button>
-
                                             <button class="btn btn-sm btn-outline-primary me-1"
                                                     data-id="<?= $producto['id'] ?>"
                                                     data-action="editar">
