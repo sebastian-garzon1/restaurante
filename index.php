@@ -13,29 +13,50 @@ require_once __DIR__ . '/app/Models/UsuarioModel.php';
 require_once __DIR__ . '/app/Models/ProductoModel.php';
 require_once __DIR__ . '/app/Models/FacturaModel.php';
 require_once __DIR__ . '/app/Models/RolModel.php';       // incluye ConfiguracionModel
+require_once __DIR__ . '/app/Models/MesaModel.php';   
+require_once __DIR__ . '/app/Models/InsumoModel.php';
+require_once __DIR__ . '/app/Models/CocinaModel.php';
+require_once __DIR__ . '/app/Models/ClienteModel.php';
+require_once __DIR__ . '/app/Models/ProductoVentaModel.php';
 require_once __DIR__ . '/app/Controllers/AuthController.php';
 require_once __DIR__ . '/app/Controllers/UsuarioController.php';
 require_once __DIR__ . '/app/Controllers/ProductoController.php';
+require_once __DIR__ . '/app/Controllers/ClienteController.php'; 
+require_once __DIR__ . '/app/Controllers/CocinaController.php'; 
+require_once __DIR__ . '/app/Controllers/InventarioController.php'; 
+require_once __DIR__ . '/app/Controllers/MesaController.php';
+require_once __DIR__ . '/app/Controllers/ProductoVentaController.php';
 require_once __DIR__ . '/app/Controllers/Controllers.php'; // todos los demás
 
 // ── Instanciar dependencias ─────────────────────────────────
-$auth          = new AuthMiddleware();
-$usuarioModel  = new UsuarioModel($pdo);
-$productoModel = new ProductoModel($pdo);
-$facturaModel  = new FacturaModel($pdo);
-$rolModel      = new RolModel($pdo);
-$configModel   = new ConfiguracionModel($pdo);
+$auth               = new AuthMiddleware();
+$usuarioModel       = new UsuarioModel($pdo);
+$productoModel      = new ProductoModel($pdo);
+$facturaModel       = new FacturaModel($pdo);
+$rolModel           = new RolModel($pdo);
+$configModel        = new ConfiguracionModel($pdo);
+$mesaModel          = new MesaModel($pdo);
+$pedidoModel        = new PedidoModel($pdo);
+$insumoModel        = new InsumoModel($pdo);
+$cocinaModel        = new CocinaModel($pdo);
+$clienteModel       = new ClienteModel($pdo);
+$productoVentaModel = new ProductoVentaModel($pdo);
 
 $configModel->initIfEmpty(); // Crea configuración por defecto si no existe
 
 // ── Instanciar controladores ────────────────────────────────
-$authCtrl    = new AuthController($usuarioModel, $auth);
-$usuarioCtrl = new UsuarioController($usuarioModel, $auth);
-$productoCtrl= new ProductoController($productoModel, $auth);
-$facturaCtrl = new FacturaController($facturaModel, $configModel, $auth);
-$ventaCtrl   = new VentaController($facturaModel, $configModel, $auth);
-$rolCtrl     = new RolController($rolModel, $auth);
-$configCtrl  = new ConfiguracionController($configModel, $auth);
+$authCtrl           = new AuthController($usuarioModel, $auth);
+$usuarioCtrl        = new UsuarioController($usuarioModel, $auth);
+$productoCtrl       = new ProductoController($productoModel, $auth);
+$facturaCtrl        = new FacturaController($facturaModel, $configModel, $auth);
+$ventaCtrl          = new VentaController($facturaModel, $configModel, $auth);
+$rolCtrl            = new RolController($rolModel, $auth);
+$configCtrl         = new ConfiguracionController($configModel, $auth);
+$mesaCtrl           = new MesaController($mesaModel, $pedidoModel, $auth);
+$inventarioCtrl     = new InventarioController($insumoModel, $auth);
+$cocinaCtrl         = new CocinaController($cocinaModel, $auth);
+$clienteCtrl        = new ClienteController($clienteModel, $auth);
+$productoVentaCtrl  = new ProductoVentaController($productoVentaModel, $auth);
 
 use Phroute\Phroute\RouteCollector;
 use Phroute\Phroute\Dispatcher;
@@ -116,6 +137,54 @@ $router->put('/api/ventas/{id:\d+}', fn($id) => $ventaCtrl->apiUpdate((int)$id))
 
 // ── Roles ────────────────────────────────────────────────────
 $router->get('/api/roles', fn() => $rolCtrl->apiIndex());
+
+// ── Mesas ────────────────────────────────────────────────────
+$router->get('/mesas', fn() => $mesaCtrl->index());
+$router->get('/api/mesas/listar',                           fn() => $mesaCtrl->apiListar());
+$router->post('/api/mesas/crear',                           fn() => $mesaCtrl->apiCrear());
+$router->post('/api/mesas/abrir',                           fn() => $mesaCtrl->apiAbrir());
+$router->delete('/api/mesas/eliminar',                      fn() => $mesaCtrl->apiEliminar());
+$router->get('/api/mesas/{id:\d+}',                         fn($id) => $mesaCtrl->apiShow((int)$id));
+$router->put('/api/mesas/{id:\d+}',                         fn($id) => $mesaCtrl->apiUpdate((int)$id));
+$router->put('/api/mesas/{id:\d+}/liberar',                 fn($id) => $mesaCtrl->apiLiberar((int)$id));
+
+$router->get('/api/mesas/pedidos/{id:\d+}',                 fn($id) => $mesaCtrl->apiGetPedido((int)$id));
+$router->post('/api/mesas/pedidos/{id:\d+}/items',          fn($id) => $mesaCtrl->apiAgregarItem((int)$id));
+$router->post('/api/mesas/pedidos/{id:\d+}/preview-factura',fn($id) => $mesaCtrl->apiPreviewFactura((int)$id));
+$router->post('/api/mesas/pedidos/{id:\d+}/facturar',       fn($id) => $mesaCtrl->apiFacturar((int)$id));
+$router->put('/api/mesas/pedidos/{id:\d+}/mover',           fn($id) => $mesaCtrl->apiMover((int)$id));
+
+$router->delete('/api/mesas/pedidos/{id:\d+}/items',        fn($id) => $mesaCtrl->apiEliminarItem((int)$id));
+$router->put('/api/mesas/items/{id:\d+}/enviar',            fn($id) => $mesaCtrl->apiEnviarItem((int)$id));
+$router->put('/api/mesas/items/{id:\d+}/estado',            fn($id) => $mesaCtrl->apiEstadoItem((int)$id));
+
+// ── Inventario ────────────────────────────────────────────────────
+$router->get('/inventario', fn() => $inventarioCtrl->index());
+$router->get('/api/inventario',                             fn() => $inventarioCtrl->apiIndex());
+$router->get('/api/inventario/buscar',                      fn() => $inventarioCtrl->apiBuscar());
+$router->post('/api/inventario/insumo_producto',            fn() => $inventarioCtrl->apiAsignar());
+$router->put('/api/inventario/insumo_producto/',            fn() => $inventarioCtrl->apiActualizarCantidad());
+$router->post('/api/inventario/disponibilidad/',            fn() => $inventarioCtrl->apiDisponibilidad());
+$router->get('/api/inventario/insumos/{id:\d+}',            fn($id) => $inventarioCtrl->apiInsumosPorProducto((int)$id));
+$router->get('/api/inventario/{id:\d+}',                    fn($id) => $inventarioCtrl->apiShow((int)$id));
+$router->post('/api/inventario',                            fn() => $inventarioCtrl->apiStore());
+$router->put('/api/inventario/{id:\d+}',                    fn($id) => $inventarioCtrl->apiUpdate((int)$id));
+$router->delete('/api/inventario/{id:\d+}',                 fn($id) => $inventarioCtrl->apiDestroy((int)$id));
+$router->delete('/api/inventario/insumo_producto/{id:\d+}', fn($id) => $inventarioCtrl->apiDesasignar((int)$id));
+
+// ── Cocina ────────────────────────────────────────
+$router->get('/cocina', fn() => $cocinaCtrl->index());
+$router->get('/api/cocina/cola',                            fn() => $cocinaCtrl->apiCola());
+$router->put('/api/cocina/item/{id:\d+}/estado',            fn($id) => $cocinaCtrl->apiEstado((int)$id));
+
+// ── Clientes ────────────────────────────────────────
+$router->get('/clientes', fn() => $clienteCtrl->index());
+$router->get('/api/clientes',                               fn() => $clienteCtrl->apiIndex());
+$router->get('/api/clientes/buscar',                        fn() => $clienteCtrl->apiBuscar());
+$router->get('/api/clientes/{id}',                          fn($id) => $clienteCtrl->apiShow((int)$id));
+$router->post('/api/clientes',                              fn() => $clienteCtrl->apiStore());
+$router->put('/api/clientes/{id}',                          fn($id) => $clienteCtrl->apiUpdate((int)$id));
+$router->delete('/api/clientes/{id}',                       fn($id) => $clienteCtrl->apiDestroy((int)$id));
 
 // ── Configuración ────────────────────────────────────────────
 $router->get('/configuracion',  fn() => $configCtrl->index());

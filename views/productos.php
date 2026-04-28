@@ -57,6 +57,11 @@
             <a class="navbar-brand" href="/">Sistema de Facturación</a>
             <div class="d-flex">
                 <a href="/" class="btn btn-outline-light me-2"><i class="bi bi-house-fill"></i></a>
+                <?php if (in_array($rol, [ROLE_ADMIN, ROLE_MESERO, ROLE_COCINA])): ?>
+                <a href="/inventario" class="btn btn-outline-light me-2" data-bs-toggle="tooltip" title="Gestionar Insumos">
+                    <i class="bi bi-card-checklist"></i>
+                </a>
+                <?php endif; ?>
                 <?php if (in_array($rol, [ROLE_ADMIN])): ?>
                 <a href="/configuracion" class="btn btn-outline-light me-2"><i class="bi bi-gear"></i></a>
                 <?php endif; ?>
@@ -117,6 +122,13 @@
                                     <td class="text-end">$<?= number_format(floatval($producto['precio_unidad'] ?? 0), 2) ?></td>
                                     <td class="text-center">
                                         <div class="action-buttons">
+                                            <button class="btn btn-sm btn-outline-success me-1"
+                                                    data-id="<?= $producto['id'] ?>"
+                                                    data-name="<?= $producto['nombre'] ?>"
+                                                    data-action="insumos">
+                                                <i class="bi bi-egg-fried"></i>
+                                            </button>
+
                                             <button class="btn btn-sm btn-outline-primary me-1"
                                                     data-id="<?= $producto['id'] ?>"
                                                     data-action="editar">

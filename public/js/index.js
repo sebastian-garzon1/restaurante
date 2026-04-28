@@ -210,6 +210,57 @@ $(document).ready(function() {
         });
     }
 
+    // Guardar nuevo cliente
+    $('#guardarCliente').click(function() {
+        const cliente = {
+            nombre: $('#nombreCliente').val().trim(),
+            direccion: $('#direccionNuevoCliente').val().trim(),
+            telefono: $('#telefonoNuevoCliente').val().trim()
+        };
+
+        if (!cliente.nombre) {
+            mostrarAlerta('error', 'El nombre es requerido');
+            return;
+        }
+
+        $.ajax({
+            url: '/api/clientes',
+            method: 'POST',
+            data: cliente,
+            success: function(response) {
+                // Crear nueva opción en el select
+                const newOption = new Option(cliente.nombre, response.id, true, true);
+                $('#cliente').append(newOption).trigger('change');
+                
+                // Actualizar información del cliente
+                $('#direccionCliente').text(cliente.direccion || 'No especificada');
+                $('#telefonoCliente').text(cliente.telefono || 'No especificado');
+                $('#infoCliente').show();
+
+                // Cerrar modal y limpiar formulario
+                const modal = bootstrap.Modal.getInstance(document.getElementById('nuevoClienteModal'));
+                if (modal) {
+                    modal.hide();
+                } else {
+                    $('#nuevoClienteModal').modal('hide');
+                }
+                $('#formNuevoCliente')[0].reset();
+                
+                mostrarAlerta('success', 'Cliente guardado exitosamente');
+            },
+            error: function(xhr) {
+                console.error('Error al guardar cliente:', xhr);
+                const error = xhr.responseJSON?.error || 'Error al guardar el cliente';
+                mostrarAlerta('error', error);
+            }
+        });
+    });
+
+    // Remover el evento submit del formulario para evitar conflictos
+    $('#formNuevoCliente').on('submit', function(e) {
+        e.preventDefault();
+    });
+
     // Manejar la navegación con teclas
     $('#cantidad').on('keydown', function(e) {
         if (e.key === 'Enter') {

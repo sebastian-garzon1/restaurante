@@ -93,6 +93,17 @@
         </a>
         <div class="d-flex">
             <a href="/" class="btn btn-outline-light me-2"><i class="bi bi-house-fill"></i></a>
+            <?php if (in_array($rol, [ROLE_ADMIN, ROLE_MESERO, ROLE_COCINA])): ?>
+            <a href="/productos" class="btn btn-outline-light me-2" data-bs-toggle="tooltip" title="Productos">
+                <i class="bi bi-box"></i>
+            </a>
+            <?php endif; ?>
+            <?php if (in_array($rol, [ROLE_ADMIN, ROLE_MESERO, ROLE_COCINA])): ?>
+            <a href="/productos/ventas" class="btn btn-outline-light me-2" data-bs-toggle="tooltip" title="Productos ventas">
+                <i class="bi bi-box"></i>
+                <i class="bi bi-receipt-cutoff"></i>
+            </a>
+            <?php endif; ?>
             <?php if (in_array($rol, [ROLE_ADMIN])): ?>
             <a href="/configuracion" class="btn btn-outline-light me-2"><i class="bi bi-gear"></i></a>
             <?php endif; ?>
