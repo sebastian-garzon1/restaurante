@@ -212,21 +212,6 @@ document.getElementById("filtrarVentas").addEventListener("click", function () {
     window.location.href = `/ventas?${params.toString()}`;
 });
 
-document
-    .getElementById("exportarVentas")
-    .addEventListener("click", function () {
-        const desde = document.getElementById("fechaDesde").value;
-        const hasta = document.getElementById("fechaHasta").value;
-        const q = document.getElementById("buscarVentas").value || "";
-        const params = new URLSearchParams();
-        if (desde && hasta) {
-            params.set("desde", desde);
-            params.set("hasta", hasta);
-        }
-        if (q) params.set("q", q);
-        window.open(`/ventas/export?${params.toString()}`, "_blank");
-    });
-
 // Establecer valores iniciales desde la URL o defaults
 (function initFiltrosDesdeURL() {
     const p = new URLSearchParams(window.location.search);

@@ -214,6 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const action = button.dataset.action;
 
         if (action === 'editar') {
+            alert("editar")
             editarProducto(id);
         } else if (action === 'eliminar') {
             eliminarProducto(id);

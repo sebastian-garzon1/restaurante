@@ -60,19 +60,24 @@ class InsumoModel
     public function buscar(string $q, ?int $excluirProductoId = null, int $limit = 10): array
     {
         $term = "%{$q}%";
+        $limit = (int) $limit;
+        $excluirProductoId = (int) $excluirProductoId;
+
         $stmt = $this->pdo->prepare("
             SELECT i.*
             FROM insumos i
             LEFT JOIN producto_insumo pi
                 ON pi.insumo_id = i.id
                 AND pi.producto_id = ?
-            WHERE (i.nombre LIKE ? OR i.descripcion LIKE ?)
+            WHERE (i.nombre LIKE ? OR IFNULL(i.descripcion, '') LIKE ?)
                 AND i.activo = 1
                 AND pi.insumo_id IS NULL
             ORDER BY i.nombre
-            LIMIT ?
+            LIMIT $limit
         ");
-        $stmt->execute([$excluirProductoId, $term, $term, $limit]);
+
+        $stmt->execute([$excluirProductoId, $term, $term]);
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
