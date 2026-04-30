@@ -144,6 +144,7 @@ class FacturaModel
     // Crear factura + detalles + descontar stock (todo en una transacción)
     public function create(array $data, int $userId): int
     {
+        $cliente_id      = $data['cliente_id'] ?? null;
         $total           = (float) ($data['total']            ?? 0);
         $descuento       = (float) ($data['descuento']        ?? 0);
         $forma_pago      = $data['forma_pago']                ?? 'efectivo';
@@ -161,16 +162,22 @@ class FacturaModel
                 : round($totalDes * 0.10, 2);
         }
 
+        if ( !$cliente_id ) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Datos incompletos']);
+            return null;
+        }
+
         $this->pdo->beginTransaction();
 
         try {
             // 1. Insertar factura
             $stmt = $this->pdo->prepare("
                 INSERT INTO facturas
-                    (user_id, total, forma_pago, pago_tarjeta, servicio, descuento, fecha)
-                VALUES (?, ?, ?, ?, ?, ?, NOW())
+                    (cliente_id, user_id, total, forma_pago, pago_tarjeta, servicio, descuento, fecha)
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
             ");
-            $stmt->execute([$userId, $total, $forma_pago, $pago_tarjeta, $pago_servicio, $descuento]);
+            $stmt->execute([$cliente_id, $userId, $total, $forma_pago, $pago_tarjeta, $pago_servicio, $descuento]);
             $facturaId = (int) $this->pdo->lastInsertId();
 
             // 2. Insertar detalle_factura
