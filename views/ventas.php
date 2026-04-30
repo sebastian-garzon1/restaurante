@@ -359,6 +359,11 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="cliente" class="form-label">Cliente</label>
+                            <select id="cliente" class="form-select" required></select>
+                        </div>
+
+                        <div class="mb-3">
                             <label for="usuario" class="form-label">Usuario</label>
                             <select id="usuario" class="form-select" required></select>
                         </div>

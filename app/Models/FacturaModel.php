@@ -55,9 +55,10 @@ class FacturaModel
         $sql = "
             SELECT f.*,
                    (COALESCE(f.total - f.descuento, 0)) AS total_final,
-                   'cliente' AS cliente_nombre,
+                   c.nombre as cliente_nombre,
                    u.nombre AS vendedor_nombre
             FROM facturas f
+            JOIN clientes c ON f.cliente_id = c.id
             JOIN usuarios u ON f.user_id    = u.id
             WHERE 1=1
         ";
@@ -91,9 +92,10 @@ class FacturaModel
     public function getById(int $id): array|false
     {
         $stmt = $this->pdo->prepare("
-            SELECT f.*, 'cliente' AS cliente_nombre, u.nombre AS vendedor_nombre
+            SELECT f.*, c.nombre AS cliente_nombre, u.nombre AS vendedor_nombre
             FROM facturas f
             LEFT JOIN usuarios u ON f.user_id    = u.id
+            LEFT JOIN clientes c ON f.cliente_id = c.id
             WHERE f.id = ?
         ");
         $stmt->execute([$id]);
@@ -104,8 +106,9 @@ class FacturaModel
     public function getParaImpresion(int $id): array|false
     {
         $stmt = $this->pdo->prepare("
-            SELECT f.*, 'cliente' AS cliente_nombre, 'lugar' as direccion, 'no registra' as telefono
+            SELECT f.*, c.nombre AS cliente_nombre, c.direccion, c.telefono
             FROM facturas f
+            JOIN clientes c ON f.cliente_id = c.id
             WHERE f.id = ?
         ");
         $stmt->execute([$id]);
