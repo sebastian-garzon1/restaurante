@@ -153,7 +153,7 @@
 
                     <?php foreach ($ventas as $v): ?>
                         <tr>
-                            <td><?= htmlspecialchars($v['producto']) ?></td>
+                            <td><?= htmlspecialchars($v['producto'] ?? "") ?></td>
                             <td><?= number_format($v['cantidad'], 0) ?></td>
                             <td>$<?= number_format($v['total'], 0) ?></td>
                         </tr>

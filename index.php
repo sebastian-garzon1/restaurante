@@ -18,6 +18,8 @@ require_once __DIR__ . '/app/Models/InsumoModel.php';
 require_once __DIR__ . '/app/Models/CocinaModel.php';
 require_once __DIR__ . '/app/Models/ClienteModel.php';
 require_once __DIR__ . '/app/Models/ProductoVentaModel.php';
+require_once __DIR__ . '/app/Models/ResponsableModel.php';
+require_once __DIR__ . '/app/Models/ContabilidadModel.php';
 require_once __DIR__ . '/app/Controllers/AuthController.php';
 require_once __DIR__ . '/app/Controllers/UsuarioController.php';
 require_once __DIR__ . '/app/Controllers/ProductoController.php';
@@ -26,7 +28,9 @@ require_once __DIR__ . '/app/Controllers/CocinaController.php';
 require_once __DIR__ . '/app/Controllers/InventarioController.php'; 
 require_once __DIR__ . '/app/Controllers/MesaController.php';
 require_once __DIR__ . '/app/Controllers/ProductoVentaController.php';
-require_once __DIR__ . '/app/Controllers/Controllers.php'; // todos los demás
+require_once __DIR__ . '/app/Controllers/ResponsableController.php';
+require_once __DIR__ . '/app/Controllers/ContabilidadController.php';
+require_once __DIR__ . '/app/Controllers/Controllers.php'; 
 
 // ── Instanciar dependencias ─────────────────────────────────
 $auth               = new AuthMiddleware();
@@ -41,6 +45,8 @@ $insumoModel        = new InsumoModel($pdo);
 $cocinaModel        = new CocinaModel($pdo);
 $clienteModel       = new ClienteModel($pdo);
 $productoVentaModel = new ProductoVentaModel($pdo);
+$responsableModel    = new ResponsableModel($pdo);
+$contabilidadModel   = new ContabilidadModel($pdo);
 
 $configModel->initIfEmpty(); // Crea configuración por defecto si no existe
 
@@ -57,6 +63,8 @@ $inventarioCtrl     = new InventarioController($insumoModel, $auth);
 $cocinaCtrl         = new CocinaController($cocinaModel, $auth);
 $clienteCtrl        = new ClienteController($clienteModel, $auth);
 $productoVentaCtrl  = new ProductoVentaController($productoVentaModel, $auth);
+$responsablesCtrl    = new ResponsableController($responsableModel, $auth);
+$contabilidadCtrl    = new ContabilidadController($contabilidadModel, $responsableModel, $auth);
 
 use Phroute\Phroute\RouteCollector;
 use Phroute\Phroute\Dispatcher;
@@ -185,6 +193,26 @@ $router->get('/api/clientes/{id}',                          fn($id) => $clienteC
 $router->post('/api/clientes',                              fn() => $clienteCtrl->apiStore());
 $router->put('/api/clientes/{id}',                          fn($id) => $clienteCtrl->apiUpdate((int)$id));
 $router->delete('/api/clientes/{id}',                       fn($id) => $clienteCtrl->apiDestroy((int)$id));
+
+// ── Responsables ────────────────────────────────────────────
+$router->get('/contabilidad/responsables',               fn() => $responsablesCtrl->index());
+$router->get('/api/responsables',              fn() => $responsablesCtrl->apiIndex());
+$router->get('/api/responsables/activos',      fn() => $responsablesCtrl->apiActivos());
+$router->get('/api/responsables/{id:\d+}',     fn($id) => $responsablesCtrl->apiShow((int)$id));
+$router->post('/api/responsables',             fn() => $responsablesCtrl->apiStore());
+$router->put('/api/responsables/{id:\d+}',     fn($id) => $responsablesCtrl->apiUpdate((int)$id));
+$router->delete('/api/responsables/{id:\d+}',  fn($id) => $responsablesCtrl->apiDelete((int)$id));
+$router->post('/api/responsables/{id:\d+}/toggle', fn($id) => $responsablesCtrl->apiToggle((int)$id));
+
+// ── Contabilidad ────────────────────────────────────────────
+$router->get('/contabilidad',  fn() => $contabilidadCtrl->index());
+$router->get('/api/contabilidad',              fn() => $contabilidadCtrl->apiIndex());
+$router->get('/api/contabilidad/{id:\d+}',     fn($id) => $contabilidadCtrl->apiShow((int)$id));
+$router->post('/api/contabilidad',             fn() => $contabilidadCtrl->apiStore());
+$router->put('/api/contabilidad/{id:\d+}',     fn($id) => $contabilidadCtrl->apiUpdate((int)$id));
+$router->delete('/api/contabilidad/{id:\d+}',  fn($id) => $contabilidadCtrl->apiDelete((int)$id));
+$router->get('/api/contabilidad/resumen',      fn() => $contabilidadCtrl->apiResumen());
+$router->get('/api/contabilidad/total',        fn() => $contabilidadCtrl->apiTotal());
 
 // ── Configuración ────────────────────────────────────────────
 $router->get('/configuracion',  fn() => $configCtrl->index());
