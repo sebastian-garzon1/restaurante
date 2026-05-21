@@ -75,6 +75,21 @@ class ContabilidadModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getVentasAgrupadas(string $fecha_desde, string $fecha_hasta): array
+    {
+        $sql = "
+            SELECT DATE(fecha) as dia, forma_pago as metodo, SUM(total - descuento) as valor, SUM(servicio) as servicio, SUM(pago_tarjeta) as pago_tarjeta
+            FROM facturas
+            WHERE fecha >= ? AND fecha <= ?
+            GROUP BY DATE(fecha), forma_pago 
+            ORDER BY dia DESC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$fecha_desde, $fecha_hasta]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function getById(int $id): array|false
     {
         $stmt = $this->pdo->prepare("

@@ -17,28 +17,170 @@ class ContabilidadController
         $rol          = $this->auth->currentRole();
         $responsables = $this->responsableModel->getAll();
 
-        // Construcción de datos para la vista
-        $egresos              = $this->contabilidadModel->getAll();
-        $egresosTotal         = ['efectivo' => 0, 'transferencia' => 0, 'tarjeta' => 0, 'total' => 0];
-        $traspasos            = $this->contabilidadModel->getAllTraspasos();
-        $traspasoTotal        = ['efectivo' => ['ingreso' => 0, 'egreso' => 0], 'transferencia' => ['ingreso' => 0, 'egreso' => 0], 'tarjeta' => ['ingreso' => 0, 'egreso' => 0]];
-        $ventasData           = [];
-        $ventasTotal          = ['efectivo' => 0, 'transferencia' => 0, 'tarjeta' => 0, 'total' => 0];
-        $totales_dia          = [];
-        $propinasData         = [];
-        $propinasTotal        = ['efectivo' => 0, 'transferencia' => 0, 'tarjeta' => 0, 'total' => 0];
-        $propinas_totales_dia = [];
-        $boldData             = [];
-        $boldTotal            = 0;
-        $granTotal            = ['efectivo' => 0, 'transferencia' => 0, 'tarjeta' => 0, 'total' => 0];
-
-        // Calcular totales de egresos por método
-        foreach ($egresos as $egreso) {
-            $metodo = $egreso['metodo'];
-            $egresosTotal[$metodo] = ($egresosTotal[$metodo] ?? 0) + $egreso['valor'];
+        // =========================================================
+        // FILTRO DE FECHAS (Lógica original adaptada para los modelos)
+        // =========================================================
+        if (!empty($_GET['desde']) && !empty($_GET['hasta'])) {
+            $fecha_desde_sql = $_GET['desde'] . ' 00:00:00';
+            $fecha_hasta_sql = $_GET['hasta'] . ' 23:59:59';
+            
+            // Filtros en formato Y-m-d para pasárselos a los métodos del modelo
+            $filtrosModel = [
+                'fecha_desde' => $_GET['desde'],
+                'fecha_hasta' => $_GET['hasta']
+            ];
+        } else {
+            $fecha_desde_sql = '2025-12-01 00:00:00';
+            $fecha_hasta_sql = date('Y-m-d') . ' 23:59:59';
+            
+            $filtrosModel = [
+                'fecha_desde' => '2025-12-01',
+                'fecha_hasta' => date('Y-m-d')
+            ];
         }
-        $egresosTotal['total'] = array_sum(array_slice($egresosTotal, 0, 3));
 
+        // =========================================================
+        // CARGA DE DATOS DESDE EL MODELO
+        // =========================================================
+        $egresos   = $this->contabilidadModel->getAll($filtrosModel);
+        $traspasos = $this->contabilidadModel->getAllTraspasos($filtrosModel);
+        $ventas    = $this->contabilidadModel->getVentasAgrupadas($fecha_desde_sql, $fecha_hasta_sql);
+
+        // =========================================================
+        // ESTRUCTURAS DE DATOS PARA LA VISTA
+        // =========================================================
+        $ventasData     = [];
+        $totales_dia    = [];
+        $propinasData   = [];
+        $propinas_totales_dia = [];
+        $boldData   = [];
+        $bold_totales_dia    = [];
+
+        $ventasTotal = [
+            "efectivo" => 0,
+            "transferencia" => 0,
+            "tarjeta" => 0,
+            "total" => 0,
+        ];
+
+        $propinasTotal = [
+            "efectivo" => 0,
+            "transferencia" => 0,
+            "tarjeta" => 0,
+            "total" => 0,
+        ];
+
+        $boldTotal = 0;
+
+        // =========================================================
+        // CÁLCULOS: VENTAS ⚡
+        // =========================================================
+        foreach ($ventas as $row) {
+            if ($row["metodo"] == "efectivo") {
+                $ventasTotal["efectivo"] += $row["valor"];
+            } else if ($row["metodo"] == "transferencia") {
+                $ventasTotal["transferencia"] += $row["valor"];
+            } else if ($row["metodo"] == "tarjeta") {
+                $ventasTotal["tarjeta"] += $row["valor"];
+            }
+
+            $ventasTotal["total"] += $row["valor"];
+
+            $ventasData[$row['dia']][] = $row;
+            @$totales_dia[$row['dia']] += $row['valor'];
+
+            // Servicio / Propinas
+            if ($row["servicio"] > 0) {
+                if ($row["metodo"] == "efectivo") {
+                    $propinasTotal["efectivo"] += $row["servicio"];
+                } else if ($row["metodo"] == "transferencia") {
+                    $propinasTotal["transferencia"] += $row["servicio"];
+                } else if ($row["metodo"] == "tarjeta") {
+                    $propinasTotal["tarjeta"] += $row["servicio"];
+                }
+
+                $propinasTotal["total"] += $row["servicio"];
+
+                $propinasData[$row['dia']][] = $row;
+                @$propinas_totales_dia[$row['dia']] += $row['servicio'];
+            }
+
+            // Tarjeta (Bold)
+            if ($row["pago_tarjeta"] > 0) {
+                $row["pago_tarjeta"] *= (0.95 / 5);
+                $boldTotal += $row["pago_tarjeta"];
+
+                $boldData[$row['dia']][] = $row;
+                @$bold_totales_dia[$row['dia']] += $row['pago_tarjeta'];
+            }
+        }
+
+        // =========================================================
+        // CÁLCULOS: EGRESOS ⚡
+        // =========================================================
+        $egresosTotal = [
+            "efectivo" => 0,
+            "transferencia" => 0,
+            "tarjeta" => 0,
+            "total" => 0,
+        ];
+
+        foreach ($egresos as $row) {
+            if ($row["metodo"] == "efectivo") {
+                $egresosTotal["efectivo"] += $row["valor"];
+            } else if ($row["metodo"] == "transferencia") {
+                $egresosTotal["transferencia"] += $row["valor"];
+            } else if ($row["metodo"] == "tarjeta") {
+                $egresosTotal["tarjeta"] += $row["valor"];
+            }
+            $egresosTotal["total"] += $row["valor"];
+        }
+
+        // =========================================================
+        // CÁLCULOS: TRASPASOS ⚡
+        // =========================================================
+        $traspasoTotal = [
+            "efectivo" => ["ingreso" => 0, "egreso" => 0],
+            "transferencia" => ["ingreso" => 0, "egreso" => 0],
+            "tarjeta" => ["ingreso" => 0, "egreso" => 0]
+        ];
+
+        foreach ($traspasos as $row) {
+            // Ingresos
+            if ($row["destino"] == "efectivo") {
+                $traspasoTotal["efectivo"]["ingreso"] += $row["valor"];
+            } else if ($row["destino"] == "transferencia") {
+                $traspasoTotal["transferencia"]["ingreso"] += $row["valor"];
+            } else if ($row["destino"] == "tarjeta") {
+                $traspasoTotal["tarjeta"]["ingreso"] += $row["valor"];
+            }
+        
+            // Egresos
+            if ($row["origen"] == "efectivo") {
+                $traspasoTotal["efectivo"]["egreso"] += $row["valor"];
+            } else if ($row["origen"] == "transferencia") {
+                $traspasoTotal["transferencia"]["egreso"] += $row["valor"];
+            } else if ($row["origen"] == "tarjeta") {
+                $traspasoTotal["tarjeta"]["egreso"] += $row["valor"];
+            }
+        }
+
+        // =========================================================
+        // CÁLCULOS: TOTALES FINALES
+        // =========================================================
+        $granTotal = [
+            "efectivo" => 0,
+            "transferencia" => 0,
+            "tarjeta" => 0,
+            "total" => 0
+        ];
+
+        $granTotal["efectivo"] = $ventasTotal["efectivo"] - $egresosTotal["efectivo"] + $traspasoTotal["efectivo"]["ingreso"] - $traspasoTotal["efectivo"]["egreso"] + $propinasTotal["efectivo"];
+        $granTotal["transferencia"] = $ventasTotal["transferencia"] - $egresosTotal["transferencia"] + $traspasoTotal["transferencia"]["ingreso"] - $traspasoTotal["transferencia"]["egreso"] + $propinasTotal["transferencia"];
+        $granTotal["tarjeta"] = $ventasTotal["tarjeta"] - $egresosTotal["tarjeta"] + $traspasoTotal["tarjeta"]["ingreso"] - $traspasoTotal["tarjeta"]["egreso"] + $propinasTotal["tarjeta"] + $boldTotal;
+        $granTotal["total"] = $granTotal["efectivo"] + $granTotal["transferencia"] + $granTotal["tarjeta"];
+
+        // Carga de la vista
         require __DIR__ . '/../../views/contabilidad.php';
     }
 
