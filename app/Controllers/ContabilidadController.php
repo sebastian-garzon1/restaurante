@@ -20,7 +20,7 @@ class ContabilidadController
         // Construcción de datos para la vista
         $egresos              = $this->contabilidadModel->getAll();
         $egresosTotal         = ['efectivo' => 0, 'transferencia' => 0, 'tarjeta' => 0, 'total' => 0];
-        $traspasos            = [];
+        $traspasos            = $this->contabilidadModel->getAllTraspasos();
         $traspasoTotal        = ['efectivo' => ['ingreso' => 0, 'egreso' => 0], 'transferencia' => ['ingreso' => 0, 'egreso' => 0], 'tarjeta' => ['ingreso' => 0, 'egreso' => 0]];
         $ventasData           = [];
         $ventasTotal          = ['efectivo' => 0, 'transferencia' => 0, 'tarjeta' => 0, 'total' => 0];
