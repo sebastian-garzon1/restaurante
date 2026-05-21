@@ -194,25 +194,33 @@ $router->post('/api/clientes',                              fn() => $clienteCtrl
 $router->put('/api/clientes/{id}',                          fn($id) => $clienteCtrl->apiUpdate((int)$id));
 $router->delete('/api/clientes/{id}',                       fn($id) => $clienteCtrl->apiDestroy((int)$id));
 
-// ── Responsables ────────────────────────────────────────────
-$router->get('/contabilidad/responsables',               fn() => $responsablesCtrl->index());
-$router->get('/api/responsables',              fn() => $responsablesCtrl->apiIndex());
-$router->get('/api/responsables/activos',      fn() => $responsablesCtrl->apiActivos());
-$router->get('/api/responsables/{id:\d+}',     fn($id) => $responsablesCtrl->apiShow((int)$id));
-$router->post('/api/responsables',             fn() => $responsablesCtrl->apiStore());
-$router->put('/api/responsables/{id:\d+}',     fn($id) => $responsablesCtrl->apiUpdate((int)$id));
-$router->delete('/api/responsables/{id:\d+}',  fn($id) => $responsablesCtrl->apiDelete((int)$id));
-$router->post('/api/responsables/{id:\d+}/toggle', fn($id) => $responsablesCtrl->apiToggle((int)$id));
-
 // ── Contabilidad ────────────────────────────────────────────
-$router->get('/contabilidad',  fn() => $contabilidadCtrl->index());
-$router->get('/api/contabilidad',              fn() => $contabilidadCtrl->apiIndex());
-$router->get('/api/contabilidad/{id:\d+}',     fn($id) => $contabilidadCtrl->apiShow((int)$id));
-$router->post('/api/contabilidad',             fn() => $contabilidadCtrl->apiStore());
-$router->put('/api/contabilidad/{id:\d+}',     fn($id) => $contabilidadCtrl->apiUpdate((int)$id));
-$router->delete('/api/contabilidad/{id:\d+}',  fn($id) => $contabilidadCtrl->apiDelete((int)$id));
-$router->get('/api/contabilidad/resumen',      fn() => $contabilidadCtrl->apiResumen());
-$router->get('/api/contabilidad/total',        fn() => $contabilidadCtrl->apiTotal());
+$router->get('/contabilidad/responsables',  fn() => $responsablesCtrl->index());
+$router->get('/contabilidad',               fn() => $contabilidadCtrl->index());
+
+// ── Responsables API ────────────────────────────────────────────
+$router->get('/api/contabilidad/responsables',           fn() => $responsablesCtrl->apiIndex());
+$router->get('/api/contabilidad/responsables/{id:\d+}',  fn($id) => $responsablesCtrl->apiShow((int)$id));
+$router->post('/api/contabilidad/responsables',          fn() => $responsablesCtrl->apiStore());
+$router->put('/api/contabilidad/responsables/{id:\d+}',  fn($id) => $responsablesCtrl->apiUpdate((int)$id));
+$router->delete('/api/contabilidad/responsables/{id:\d+}', fn($id) => $responsablesCtrl->apiDelete((int)$id));
+
+// ── Egresos API ────────────────────────────────────────────
+$router->get('/api/contabilidad/egresos/{id:\d+}',  fn($id) => $contabilidadCtrl->apiShow((int)$id));
+$router->post('/api/contabilidad/egresos',          fn() => $contabilidadCtrl->apiStore());
+$router->put('/api/contabilidad/egresos/{id:\d+}',  fn($id) => $contabilidadCtrl->apiUpdate((int)$id));
+$router->delete('/api/contabilidad/egresos/{id:\d+}', fn($id) => $contabilidadCtrl->apiDelete((int)$id));
+$router->get('/api/contabilidad',                   fn() => $contabilidadCtrl->apiIndex());
+$router->get('/api/contabilidad/resumen',           fn() => $contabilidadCtrl->apiResumen());
+$router->get('/api/contabilidad/total',             fn() => $contabilidadCtrl->apiTotal());
+
+// ── Traspasos API ────────────────────────────────────────────
+$router->get('/api/contabilidad/traspasos/{id:\d+}',  fn($id) => $contabilidadCtrl->apiShowTraspaso((int)$id));
+$router->post('/api/contabilidad/traspasos',          fn() => $contabilidadCtrl->apiStoreTraspaso());
+$router->put('/api/contabilidad/traspasos/{id:\d+}',  fn($id) => $contabilidadCtrl->apiUpdateTraspaso((int)$id));
+$router->delete('/api/contabilidad/traspasos/{id:\d+}', fn($id) => $contabilidadCtrl->apiDeleteTraspaso((int)$id));
+
+
 
 // ── Configuración ────────────────────────────────────────────
 $router->get('/configuracion',  fn() => $configCtrl->index());

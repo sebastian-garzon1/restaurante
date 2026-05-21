@@ -15,9 +15,9 @@ class ContabilidadController
     {
         $this->auth->requireRole([ROLE_ADMIN, ROLE_CAJERO]);
         $rol          = $this->auth->currentRole();
+        $responsables = $this->responsableModel->getAll();
 
         // Construcción de datos para la vista
-        // (mantiene la estructura de la vista contabilidad.php existente)
         $egresos              = $this->contabilidadModel->getAll();
         $egresosTotal         = ['efectivo' => 0, 'transferencia' => 0, 'tarjeta' => 0, 'total' => 0];
         $traspasos            = [];
@@ -52,7 +52,6 @@ class ContabilidadController
             'fecha_desde'   => $_GET['fecha_desde'] ?? '',
             'fecha_hasta'   => $_GET['fecha_hasta'] ?? '',
             'metodo'        => $_GET['metodo']      ?? '',
-            'responsable_id' => $_GET['responsable_id'] ?? '',
         ];
 
         echo json_encode($this->contabilidadModel->getAll($filtros));
@@ -75,7 +74,8 @@ class ContabilidadController
     {
         $this->auth->requireRole([ROLE_ADMIN, ROLE_CAJERO]);
         header('Content-Type: application/json');
-        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+        
+        $data = $_POST ?? []; 
 
         if (empty($data['fecha']) || empty($data['concepto']) || empty($data['valor']) || empty($data['metodo'])) {
             http_response_code(400);
@@ -86,10 +86,7 @@ class ContabilidadController
         try {
             $id = $this->contabilidadModel->create($data);
             http_response_code(201);
-            echo json_encode([
-                'id' => $id,
-                'message' => 'Egreso registrado exitosamente'
-            ]);
+            echo json_encode(['id' => $id, 'message' => 'Egreso registrado exitosamente']);
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Error al registrar egreso']);
@@ -103,22 +100,22 @@ class ContabilidadController
         $data = json_decode(file_get_contents('php://input'), true) ?? [];
 
         if (empty($data['fecha']) || empty($data['concepto']) || empty($data['valor']) || empty($data['metodo'])) {
-            http_response_code(400);
             echo json_encode(['error' => 'Campos requeridos: fecha, concepto, valor, metodo']);
+            http_response_code(400);
             return;
         }
 
         try {
             $updated = $this->contabilidadModel->update($id, $data);
             if (!$updated) {
-                http_response_code(404);
                 echo json_encode(['error' => 'Egreso no encontrado']);
+                http_response_code(404);
                 return;
             }
             echo json_encode(['message' => 'Egreso actualizado exitosamente']);
         } catch (Exception $e) {
-            http_response_code(500);
             echo json_encode(['error' => 'Error al actualizar egreso']);
+            http_response_code(500);
         }
     }
 
@@ -144,23 +141,111 @@ class ContabilidadController
     {
         $this->auth->requireRole([ROLE_ADMIN, ROLE_CAJERO]);
         header('Content-Type: application/json');
-
         $fecha_desde = $_GET['fecha_desde'] ?? '';
         $fecha_hasta = $_GET['fecha_hasta'] ?? '';
-
-        $resumen = $this->contabilidadModel->getResumenPorMetodo($fecha_desde, $fecha_hasta);
-        echo json_encode($resumen);
+        echo json_encode($this->contabilidadModel->getResumenPorMetodo($fecha_desde, $fecha_hasta));
     }
 
     public function apiTotal(): void
     {
         $this->auth->requireRole([ROLE_ADMIN, ROLE_CAJERO]);
         header('Content-Type: application/json');
-
         $fecha_desde = $_GET['fecha_desde'] ?? '';
         $fecha_hasta = $_GET['fecha_hasta'] ?? '';
-
         $total = $this->contabilidadModel->getTotalPorPeriodo($fecha_desde, $fecha_hasta);
         echo json_encode(['total' => $total]);
+    }
+
+    // ── API TRASPASOS ──────────────────────────
+    public function apiAllTraspasos(): void
+    {
+        $this->auth->requireRole([ROLE_ADMIN, ROLE_CAJERO]);
+        header('Content-Type: application/json');
+
+        $filtros = [
+            'fecha_desde' => $_GET['fecha_desde'] ?? '',
+            'fecha_hasta' => $_GET['fecha_hasta'] ?? '',
+        ];
+
+        echo json_encode($this->contabilidadModel->getAllTraspasos($filtros));
+    }
+
+    public function apiShowTraspaso(int $id): void
+    {
+        $this->auth->requireRole([ROLE_ADMIN, ROLE_CAJERO]);
+        header('Content-Type: application/json');
+        $traspaso = $this->contabilidadModel->getTraspasoById($id);
+        if (!$traspaso) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Traspaso no encontrado']);
+            return;
+        }
+        echo json_encode($traspaso);
+    }
+
+    public function apiStoreTraspaso(): void
+    {
+        $this->auth->requireRole([ROLE_ADMIN, ROLE_CAJERO]);
+        header('Content-Type: application/json');
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+
+        if (empty($data['fecha']) || empty($data['origen']) || empty($data['destino']) || empty($data['valor'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Campos requeridos: fecha, origen, destino, valor']);
+            return;
+        }
+
+        try {
+            $id = $this->contabilidadModel->createTraspaso($data);
+            http_response_code(201);
+            echo json_encode(['id' => $id, 'message' => 'Traspaso creado exitosamente']);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Error al crear traspaso']);
+        }
+    }
+
+    public function apiUpdateTraspaso(int $id): void
+    {
+        $this->auth->requireRole([ROLE_ADMIN, ROLE_CAJERO]);
+        header('Content-Type: application/json');
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+
+        if (empty($data['fecha']) || empty($data['origen']) || empty($data['destino']) || empty($data['valor'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Campos requeridos: fecha, origen, destino, valor']);
+            return;
+        }
+
+        try {
+            $updated = $this->contabilidadModel->updateTraspaso($id, $data);
+            if (!$updated) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Traspaso no encontrado']);
+                return;
+            }
+            echo json_encode(['message' => 'Traspaso actualizado exitosamente']);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Error al actualizar traspaso']);
+        }
+    }
+
+    public function apiDeleteTraspaso(int $id): void
+    {
+        $this->auth->requireRole([ROLE_ADMIN]);
+        header('Content-Type: application/json');
+        try {
+            $deleted = $this->contabilidadModel->deleteTraspaso($id);
+            if (!$deleted) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Traspaso no encontrado']);
+                return;
+            }
+            echo json_encode(['message' => 'Traspaso eliminado exitosamente']);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Error al eliminar traspaso']);
+        }
     }
 }

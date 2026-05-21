@@ -26,12 +26,6 @@ class ResponsableController
         echo json_encode($this->responsableModel->getAll());
     }
 
-    public function apiActivos(): void
-    {
-        header('Content-Type: application/json');
-        echo json_encode($this->responsableModel->getActivos());
-    }
-
     public function apiShow(int $id): void
     {
         $this->auth->requireRole([ROLE_ADMIN]);
@@ -60,10 +54,7 @@ class ResponsableController
         try {
             $id = $this->responsableModel->create($data);
             http_response_code(201);
-            echo json_encode([
-                'id' => $id,
-                'message' => 'Responsable creado exitosamente'
-            ]);
+            echo json_encode(['id' => $id, 'message' => 'Responsable creado exitosamente']);
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Error al crear responsable']);
@@ -111,24 +102,6 @@ class ResponsableController
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => 'Error al eliminar responsable']);
-        }
-    }
-
-    public function apiToggle(int $id): void
-    {
-        $this->auth->requireRole([ROLE_ADMIN]);
-        header('Content-Type: application/json');
-        try {
-            $toggled = $this->responsableModel->toggleActivo($id);
-            if (!$toggled) {
-                http_response_code(404);
-                echo json_encode(['error' => 'Responsable no encontrado']);
-                return;
-            }
-            echo json_encode(['message' => 'Estado actualizado exitosamente']);
-        } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(['error' => 'Error al cambiar estado']);
         }
     }
 }

@@ -12,12 +12,10 @@ class ContabilidadModel
     public ?int    $responsable_id = null;
     public string  $concepto;
     public float   $valor;
-    public string  $metodo;  // 'efectivo', 'transferencia', 'tarjeta'
+    public string  $metodo;
     public ?string $comprobante = null;
     public int     $modificado   = 0;
     public ?string $creado_en    = null;
-
-    // Atributo extra del JOIN con responsables
     public ?string $responsable_nombre = null;
 
     // =========================================================
@@ -26,7 +24,7 @@ class ContabilidadModel
     public function __construct(private PDO $pdo) {}
 
     // =========================================================
-    //  HIDRATACIÓN (poblar atributos desde un array de BD)
+    //  HIDRATACIÓN
     // =========================================================
     public function fill(array $data): static
     {
@@ -47,9 +45,6 @@ class ContabilidadModel
     //  MÉTODOS DE ACCESO A DATOS
     // =========================================================
 
-    /**
-     * Obtener todos los egresos con filtros opcionales
-     */
     public function getAll(array $filtros = []): array
     {
         $sql = "
@@ -72,10 +67,6 @@ class ContabilidadModel
             $sql .= " AND e.metodo = ?";
             $params[] = $filtros['metodo'];
         }
-        if (!empty($filtros['responsable_id'])) {
-            $sql .= " AND e.responsable_id = ?";
-            $params[] = $filtros['responsable_id'];
-        }
 
         $sql .= " ORDER BY e.fecha DESC, e.id DESC";
 
@@ -84,9 +75,6 @@ class ContabilidadModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Obtener un egreso por ID
-     */
     public function getById(int $id): array|false
     {
         $stmt = $this->pdo->prepare("
@@ -99,9 +87,6 @@ class ContabilidadModel
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Crear nuevo egreso
-     */
     public function create(array $data): int
     {
         $stmt = $this->pdo->prepare("
@@ -111,7 +96,7 @@ class ContabilidadModel
         ");
         $stmt->execute([
             $data['fecha']           ?? date('Y-m-d'),
-            $data['responsable_id']  ?? null,
+            $data['responsable']  ?? null,
             $data['concepto']        ?? '',
             $data['valor']           ?? 0,
             $data['metodo']          ?? 'efectivo',
@@ -120,9 +105,6 @@ class ContabilidadModel
         return (int) $this->pdo->lastInsertId();
     }
 
-    /**
-     * Actualizar egreso
-     */
     public function update(int $id, array $data): bool
     {
         $stmt = $this->pdo->prepare("
@@ -138,7 +120,7 @@ class ContabilidadModel
         ");
         return $stmt->execute([
             $data['fecha']           ?? date('Y-m-d'),
-            $data['responsable_id']  ?? null,
+            $data['responsable']  ?? null,
             $data['concepto']        ?? '',
             $data['valor']           ?? 0,
             $data['metodo']          ?? 'efectivo',
@@ -147,25 +129,15 @@ class ContabilidadModel
         ]);
     }
 
-    /**
-     * Eliminar egreso
-     */
     public function delete(int $id): bool
     {
         $stmt = $this->pdo->prepare("DELETE FROM egresos WHERE id = ?");
         return $stmt->execute([$id]);
     }
 
-    /**
-     * Obtener resumen de egresos por método (efectivo, transferencia, tarjeta)
-     */
     public function getResumenPorMetodo(string $fecha_desde = '', string $fecha_hasta = ''): array
     {
-        $sql = "
-            SELECT metodo, SUM(valor) AS total, COUNT(*) AS cantidad
-            FROM egresos
-            WHERE 1=1
-        ";
+        $sql = "SELECT metodo, SUM(valor) AS total, COUNT(*) AS cantidad FROM egresos WHERE 1=1";
         $params = [];
 
         if (!empty($fecha_desde)) {
@@ -176,7 +148,6 @@ class ContabilidadModel
             $sql .= " AND fecha <= ?";
             $params[] = $fecha_hasta;
         }
-
         $sql .= " GROUP BY metodo";
 
         $stmt = $this->pdo->prepare($sql);
@@ -184,9 +155,6 @@ class ContabilidadModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Obtener total de egresos por período
-     */
     public function getTotalPorPeriodo(string $fecha_desde = '', string $fecha_hasta = ''): float
     {
         $sql = "SELECT SUM(valor) AS total FROM egresos WHERE 1=1";
@@ -205,5 +173,78 @@ class ContabilidadModel
         $stmt->execute($params);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return (float) ($result['total'] ?? 0);
+    }
+
+    // =========================================================
+    //  MÉTODOS PARA TRASPASOS
+    // =========================================================
+
+    public function getAllTraspasos(array $filtros = []): array
+    {
+        $sql = "SELECT * FROM traspasos WHERE 1=1";
+        $params = [];
+
+        if (!empty($filtros['fecha_desde'])) {
+            $sql .= " AND fecha >= ?";
+            $params[] = $filtros['fecha_desde'];
+        }
+        if (!empty($filtros['fecha_hasta'])) {
+            $sql .= " AND fecha <= ?";
+            $params[] = $filtros['fecha_hasta'];
+        }
+
+        $sql .= " ORDER BY fecha DESC, id DESC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getTraspasoById(int $id): array|false
+    {
+        $stmt = $this->pdo->prepare("SELECT * FROM traspasos WHERE id = ? LIMIT 1");
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function createTraspaso(array $data): int
+    {
+        $stmt = $this->pdo->prepare("
+            INSERT INTO traspasos (fecha, origen, destino, valor)
+            VALUES (?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            $data['fecha']   ?? date('Y-m-d'),
+            $data['origen']  ?? '',
+            $data['destino'] ?? '',
+            $data['valor']   ?? 0,
+        ]);
+        return (int) $this->pdo->lastInsertId();
+    }
+
+    public function updateTraspaso(int $id, array $data): bool
+    {
+        $stmt = $this->pdo->prepare("
+            UPDATE traspasos SET
+                fecha   = ?,
+                origen  = ?,
+                destino = ?,
+                valor   = ?,
+                modificado = 1
+            WHERE id = ?
+        ");
+        return $stmt->execute([
+            $data['fecha']   ?? date('Y-m-d'),
+            $data['origen']  ?? '',
+            $data['destino'] ?? '',
+            $data['valor']   ?? 0,
+            $id,
+        ]);
+    }
+
+    public function deleteTraspaso(int $id): bool
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM traspasos WHERE id = ?");
+        return $stmt->execute([$id]);
     }
 }

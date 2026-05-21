@@ -2,7 +2,7 @@
 
 $DB_HOST = "localhost";
 $DB_USER = "root";
-$DB_PASS = "123456";
+$DB_PASS = "";
 $DB_NAME = "restaurante";
 
 try {

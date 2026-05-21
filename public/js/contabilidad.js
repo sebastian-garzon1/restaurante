@@ -164,27 +164,55 @@ $(document).ready(function() {
 
         const fileInput = $('#flComprobante')[0];
 
-        /*if (!modoEdicion && fileInput.files.length === 0) {
+        if (!modoEdicion && fileInput.files.length === 0) {
             alert('El comprobante es obligatorio');
             $('#flComprobante').addClass('is-invalid');
             return;
         } else {
             $('#flComprobante').removeClass('is-invalid');
-        }*/
+        }
 
         if (fileInput && fileInput.files.length > 0) {
             formData.append('comprobante', fileInput.files[0]);
         }
 
+        const url = modoEdicion ? `/api/contabilidad/egresos/${$('#egresoId').val()}` : '/api/contabilidad/egresos';
+        const method = modoEdicion ? 'PUT' : 'POST';
+
         // =========================
         // ENVÍO
         // =========================
         try {
-            const response = await fetch('/api/contabilidad/egresos', {
-                method: 'POST',
-                body: formData
-            });
+            let response;
 
+            if (method === 'PUT') {
+                // Si es PUT, armamos un objeto JS normal y lo hacemos string JSON
+                const dataParaEnviar = {
+                    fecha: egreso.fecha,
+                    responsable: egreso.responsable,
+                    concepto: egreso.concepto,
+                    metodo: egreso.metodo,
+                    valor: egreso.valor,
+                    modo: 'editar',
+                    id: $('#egresoId').val()
+                };
+
+                response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json' // Le avisamos a PHP que va un JSON real
+                    },
+                    body: JSON.stringify(dataParaEnviar) // Esto SÍ genera el JSON con datos
+                });
+            } else {
+                // Si es POST (Crear), mantienes tu FormData original porque viaja el archivo
+                response = await fetch(url, {
+                    method: 'POST',
+                    body: formData // NOTA: ¡Sin headers! El navegador pone el multipart/form-data automáticamente
+                });
+            }
+
+            // Procesamos la respuesta del servidor
             const data = await response.json();
 
             if (!response.ok) {
@@ -445,17 +473,3 @@ function cambiarColor(){
         document.getElementById("flComprobante").style.backgroundColor = "#36eb34a1";
     }
 }
-
-$("#exportarEgresos").on("click", function () {
-    const desde = $("#fechaDesde").val();
-    const hasta = $("#fechaHasta").val();
-    const q = $("#buscarVentas").val() || "";
-    const params = new URLSearchParams();
-
-    if (desde && hasta) {
-        params.set("desde", desde);
-        params.set("hasta", hasta);
-    }
-
-    window.open(`/contabilidad/export?${params.toString()}`, "_blank");
-});

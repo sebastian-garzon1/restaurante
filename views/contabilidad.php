@@ -328,9 +328,6 @@
                             <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#egresoModal">
                                 <i class="bi bi-plus-lg me-1"></i>
                             </button>
-                            <button class="btn btn-sm btn-success" id="exportarEgresos">
-                                <i class="bi bi-file-earmark-excel"></i>
-                            </button>
                         </h4>
                         <div class="table-container mb-3">
                             <table class="table small table-hover">

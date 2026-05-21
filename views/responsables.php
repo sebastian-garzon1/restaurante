@@ -13,10 +13,10 @@
         body { background-color: #f8f9fa; }
         .navbar { background-color: #2c3e50; box-shadow: 0 2px 4px rgba(0,0,0,.1); }
         .navbar-brand { color: white !important; font-weight: bold; }
-        .card { border: none; box-shadow: 0 .5rem 1rem rgba(0,0,0,.05); margin-bottom:1.5rem; }
-        .card-header { background:#fff; border-bottom:2px solid #f8f9fa; font-weight:600; }
-        .table th { border-top:none; }
-        .action-buttons .btn { padding:.25rem .5rem; }
+        .card { border: none; box-shadow: 0 .5rem 1rem rgba(0,0,0,.05); margin-bottom: 1.5rem; }
+        .card-header { background: #fff; border-bottom: 2px solid #f8f9fa; font-weight: 600; }
+        .table th { border-top: none; }
+        .action-buttons .btn { padding: .25rem .5rem; }
     </style>
 </head>
 <body>
@@ -45,7 +45,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <div><i class="bi bi-people-fill me-2"></i> Gestión de Responsables</div>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#responsableModal">
-                <i class="bi bi-plus-lg me-1"></i> Nuevo Responsables
+                <i class="bi bi-plus-lg me-1"></i> Nuevo Responsable
             </button>
         </div>
 
@@ -108,7 +108,7 @@
                     <input type="hidden" id="responsableId">
                     <div class="mb-3">
                         <label class="form-label">Nombre</label>
-                        <input type="text" class="form-control" id="nombre" placeholder="Nombre" required>
+                        <input type="text" class="form-control" id="nombre" placeholder="Nombre completo" required>
                     </div>
                 </form>
             </div>
@@ -118,7 +118,6 @@
                     <i class="bi bi-save me-1"></i>
                     Guardar
                 </button>
-                
             </div>
         </div>
     </div>
