@@ -80,7 +80,7 @@ class ContabilidadModel
         $sql = "
             SELECT DATE(fecha) as dia, forma_pago as metodo, SUM(total - descuento) as valor, SUM(servicio) as servicio, SUM(pago_tarjeta) as pago_tarjeta
             FROM facturas
-            WHERE fecha >= ? AND fecha <= ?
+            WHERE fecha >= ? AND fecha <= ? AND estado = 1
             GROUP BY DATE(fecha), forma_pago 
             ORDER BY dia DESC
         ";

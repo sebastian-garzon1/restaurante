@@ -135,6 +135,7 @@ $router->get('/facturas',                    fn() => $facturaCtrl->index());
 $router->get('/facturas/{id:\d+}/imprimir',  fn($id) => $facturaCtrl->imprimir((int)$id));
 $router->post('/api/facturas',               fn() => $facturaCtrl->apiStore());
 $router->get('/api/facturas/{id}/detalles',  fn($id) => $facturaCtrl->apiDetalles((int)$id));
+$router->put('/api/facturas/{id:\d+}', fn($id) => $facturaCtrl->apiEstado((int)$id));
 $router->delete('/api/facturas/{id:\d+}',    fn($id) => $facturaCtrl->apiDestroy((int)$id));
 
 // ── Ventas ───────────────────────────────────────────────────

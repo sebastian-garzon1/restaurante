@@ -278,10 +278,8 @@ unset($_SESSION['login_error']);
                 </form>
 
             <div class="mt-4 pt-2">
-                <i class="bi bi-dribbble fs-5 mb-1 d-block text-white-50"></i> <div class="welcome-title fs-5">Un lugar donde el</div>
                 <div class="card-footer-subphrase">Fútbol y la Gastronomía</div>
                 <div class="card-footer-phrase fs-5">nos unen</div>
-                <div class="stars-decoration mt-2">★ ★ ★</div>
             </div>
         </div>
     </div>
@@ -328,6 +326,14 @@ unset($_SESSION['login_error']);
                 </div>
             </div>
 
+            <div class="col-6 col-md-2">
+                <div class="feature-item">
+                    <i class="bi bi-instagram feature-icon"></i>
+                    <div>
+                        <a href="https://www.instagram.com/palermoche6/" target="_blank" rel="noopener noreferrer" style="color: white;">Contactanos</a>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="text-center mt-4 pt-2 bottom-credits">

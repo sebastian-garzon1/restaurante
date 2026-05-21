@@ -166,7 +166,7 @@
                     <tbody id="ventasTabla">
 
                     <?php foreach ($ventas as $v): ?>
-                        <tr>
+                        <tr class="<?php if ($v['estado'] == 0){ echo "table-danger"; } ?>">
                             <td><?= $v['id'] ?></td>
                             <td><?= date("d/m/Y H:i", strtotime($v['fecha'])) ?></td>
                             <td><?= htmlspecialchars($v['cliente_nombre']) ?></td>
@@ -182,8 +182,8 @@
                                 $<?= number_format($v['total_final'], 0) ?>
                             </td>
 
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-outline-success btn-editar"
+                            <td class="text-center" data-estado="<?= $v['estado'] ?>">
+                                <button class="btn btn-sm btn-outline-success btn-editar d-none"
                                     data-factura-id="<?= $v['id'] ?>"
                                     data-bs-toggle="tooltip" 
                                     data-bs-title="Editar factura">
@@ -204,11 +204,13 @@
                                     <i class="bi bi-printer"></i>
                                 </button>
 
-                                <button class="btn btn-sm btn-outline-danger btn-eliminar"
+                                
+                                <button class="btn btn-sm btn-outline-secondary btn-estado <?php if ($v['estado'] == 0){ echo "d-none"; } ?>"
                                     data-factura-id="<?= $v['id'] ?>"
+                                    data-factura-estado="<?= $v['estado'] ?>"
                                     data-bs-toggle="tooltip" 
-                                    data-bs-title="Eliminar factura">
-                                    <i class="bi bi-trash"></i>
+                                    data-bs-title="Cambiar Estado factura">
+                                    <i class="bi bi-ban"></i>
                                 </button>
                             </td>
                         </tr>

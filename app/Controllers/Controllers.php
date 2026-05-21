@@ -117,6 +117,40 @@ class FacturaController
         ]);
     }
 
+    // ESTADO /api/facturas/{id}
+    public function apiEstado(int $id): void
+    {
+        $this->auth->isLoggedIn();
+        header('Content-Type: application/json');
+        
+        try {
+            // Leer el cuerpo de la petición PUT (JSON)
+            $jsonInput = file_get_contents('php://input');
+            $data = json_decode($jsonInput, true);
+            
+            // Validar que el estado realmente venga en la petición
+            if (!isset($data['estado'])) {
+                http_response_code(400); // Bad Request
+                echo json_encode(['error' => 'El campo estado es requerido.']);
+                return;
+            }
+            
+            $estado = (int)$data['estado'];
+
+            // Ejecutar la actualización en el modelo
+            $this->facturaModel->estado($id, $estado);
+            
+            // Respuesta exitosa (definida antes del echo)
+            http_response_code(200);
+            echo json_encode(['success' => true]);
+
+        } catch (Exception $e) {
+            // Respuesta de error (definida antes del echo)
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
     // DELETE /api/facturas/{id}
     public function apiDestroy(int $id): void
     {

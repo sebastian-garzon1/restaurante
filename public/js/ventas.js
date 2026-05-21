@@ -178,6 +178,36 @@ $('#guardarVenta').click(async function() {
     }
 });
 
+function cambiarEstadoFactura(id, estado) {
+    if (!confirm("¿Está seguro de cambiar el estado de esta factura?")) {
+        return;
+    }
+    
+    if (estado == 1) {
+        estado = 0;
+    } else {
+        estado = 1;
+    }
+
+    fetch(`/api/facturas/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ estado: estado })
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error("Error al actualizar el estado de la factura");
+            }
+            return response.json();
+        })
+        .then((data) => {
+            location.reload();
+        })
+        .catch((error) => alert(error.message));
+}
+
 function eliminarFactura(id) {
     if (!confirm("¿Está seguro de eliminar esta factura?")) {
         return;
@@ -212,21 +242,6 @@ document.getElementById("filtrarVentas").addEventListener("click", function () {
     window.location.href = `/ventas?${params.toString()}`;
 });
 
-document
-    .getElementById("exportarVentas")
-    .addEventListener("click", function () {
-        const desde = document.getElementById("fechaDesde").value;
-        const hasta = document.getElementById("fechaHasta").value;
-        const q = document.getElementById("buscarVentas").value || "";
-        const params = new URLSearchParams();
-        if (desde && hasta) {
-            params.set("desde", desde);
-            params.set("hasta", hasta);
-        }
-        if (q) params.set("q", q);
-        window.open(`/ventas/export?${params.toString()}`, "_blank");
-    });
-
 // Establecer valores iniciales desde la URL o defaults
 (function initFiltrosDesdeURL() {
     const p = new URLSearchParams(window.location.search);
@@ -254,31 +269,36 @@ function calcularTotales() {
     const totales = document.querySelectorAll("tbody#ventasTabla td[data-total]");
     let total = 0, servicio = 0, tarjeta = 0, servicioEfectivo = 0, servicioTransferencia = 0, servicioTarjeta = 0, tef = 0, ttr = 0, tta = 0;
     document.querySelectorAll("#ventasTabla tr").forEach((tr) => {
-        // Total general
-        const totalEl = tr.querySelector("[data-total]");
-        const forma = tr.children[4]?.innerText?.trim().toLowerCase();
-        const val = Number(totalEl?.dataset.total || 0);
-        total += val;
+        const estado = tr.querySelector("[data-estado]");
+        const valEstado = Number(estado?.dataset.estado || 0);
 
-        // Servicio
-        const totalSer = tr.querySelector("[data-servicio]");
-        const valSer = Number(totalSer?.dataset.servicio || 0);
-        servicio += valSer;
+        if( valEstado == 1 ){
+            // Total general
+            const totalEl = tr.querySelector("[data-total]");
+            const forma = tr.children[4]?.innerText?.trim().toLowerCase();
+            const val = Number(totalEl?.dataset.total || 0);
+            total += val;
 
-        // Valor de Tarjeta
-        const totalTarjeta = tr.querySelector("[data-tarjeta]");
-        const valTar = Number(totalTarjeta?.dataset.tarjeta || 0);
-        tarjeta += valTar;
+            // Servicio
+            const totalSer = tr.querySelector("[data-servicio]");
+            const valSer = Number(totalSer?.dataset.servicio || 0);
+            servicio += valSer;
 
-        if (forma === "efectivo") tef += val;
-        else if (forma === "transferencia") ttr += val;
-        else if (forma === "tarjeta") tta += val;
+            // Valor de Tarjeta
+            const totalTarjeta = tr.querySelector("[data-tarjeta]");
+            const valTar = Number(totalTarjeta?.dataset.tarjeta || 0);
+            tarjeta += valTar;
 
-        // Calculo detallado de servicio por tipo de pago
-        if(valSer > 0){
-            if (forma === "efectivo") servicioEfectivo += valSer;
-            else if (forma === "transferencia") servicioTransferencia += valSer;
-            else if (forma === "tarjeta") servicioTarjeta += valSer;
+            if (forma === "efectivo") tef += val;
+            else if (forma === "transferencia") ttr += val;
+            else if (forma === "tarjeta") tta += val;
+
+            // Calculo detallado de servicio por tipo de pago
+            if(valSer > 0){
+                if (forma === "efectivo") servicioEfectivo += valSer;
+                else if (forma === "transferencia") servicioTransferencia += valSer;
+                else if (forma === "tarjeta") servicioTarjeta += valSer;
+            }
         }
     });
 
@@ -322,6 +342,14 @@ document.querySelectorAll(".btn-eliminar").forEach((button) => {
     button.addEventListener("click", function () {
         const facturaId = this.getAttribute("data-factura-id");
         eliminarFactura(facturaId);
+    });
+});
+
+document.querySelectorAll(".btn-estado").forEach((button) => {
+    button.addEventListener("click", function () {
+        const facturaId = this.getAttribute("data-factura-id");
+        const facturaEstado = this.getAttribute("data-factura-estado");
+        cambiarEstadoFactura(facturaId, facturaEstado);
     });
 });
 

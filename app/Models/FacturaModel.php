@@ -225,6 +225,35 @@ class FacturaModel
         return $stmt->rowCount() > 0;
     }
 
+    public function estado(int $id, int $estado): void
+    {
+        $this->pdo->beginTransaction();
+
+        try {
+            $stmtDetalle = $this->pdo->prepare("SELECT producto_id, cantidad FROM detalle_factura WHERE factura_id = ?");
+            $stmtDetalle->execute([$id]);
+            $detalles = $stmtDetalle->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($detalles)) {
+                throw new Exception('No se encontraron detalles para la factura');
+            }
+
+            $stmt = $this->pdo->prepare("UPDATE facturas SET estado = ? WHERE id = ?");
+            $stmt->execute([$estado, $id]);
+
+            if ($stmt->rowCount() === 0) {
+                throw new Exception('Factura no encontrada');
+            }
+
+            $this->pdo->commit();
+
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+
+    }
+
     // Eliminar factura y revertir stock (todo en una transacción)
     public function delete(int $id): void
     {
